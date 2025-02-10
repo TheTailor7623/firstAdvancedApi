@@ -45,6 +45,12 @@ REST FRAMEWORK NOTES:
     * Create model field
     * set is_active, is_staff and is_superuser
     * Link to appropriate manager
+
 * Create manager for user model
     * create_user function
     * create_superuser function
+
+* Creating models
+    * Model Meta classes
+    * Constraints
+    * Validators
