@@ -1,0 +1,22 @@
+# Ignore virtual environment directory
+myvenv/
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore environment configuration files
+.env
+
+# macOS system files
+.DS_Store
+
+# VSCode settings (optional, if you use VSCode)
+.vscode/
+
+# Ignore IDE and editor-specific files (e.g., PyCharm)
+.idea/
+
+# Ignore logs
+*.log
