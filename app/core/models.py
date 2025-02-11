@@ -1,3 +1,7 @@
+
+"""
+Database models
+"""
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from datetime import timedelta
@@ -41,6 +45,43 @@ class UsersModelManager(BaseUserManager):
 
 class UsersModel(AbstractBaseUser, PermissionsMixin):
     """Database user model for users in the system"""
+    CITY_CHOICES = [
+        # United Kingdom
+        ("london", "London"),
+        ("manchester", "Manchester"),
+        ("birmingham", "Birmingham"),
+        ("glasgow", "Glasgow"),
+        ("edinburgh", "Edinburgh"),
+
+        # United States
+        ("new_york", "New York"),
+        ("los_angeles", "Los Angeles"),
+        ("chicago", "Chicago"),
+        ("houston", "Houston"),
+        ("miami", "Miami"),
+
+        # Europe
+        ("paris", "Paris"),
+        ("berlin", "Berlin"),
+        ("madrid", "Madrid"),
+        ("rome", "Rome"),
+        ("amsterdam", "Amsterdam"),
+        ("vienna", "Vienna"),
+        ("copenhagen", "Copenhagen"),
+        ("stockholm", "Stockholm"),
+
+        # Asia
+        ("tokyo", "Tokyo"),
+        ("seoul", "Seoul"),
+        ("beijing", "Beijing"),
+        ("shanghai", "Shanghai"),
+        ("hong_kong", "Hong Kong"),
+        ("singapore", "Singapore"),
+        ("bangkok", "Bangkok"),
+        ("mumbai", "Mumbai"),
+        ("delhi", "Delhi"),
+        ("jakarta", "Jakarta"),
+    ]
 
     GENDER_CHOICES = [
         ("male", "Male"),
@@ -52,7 +93,7 @@ class UsersModel(AbstractBaseUser, PermissionsMixin):
     firstname = models.CharField(max_length=100)
     surname = models.CharField(max_length=100)
     date_of_birth = models.DateField()
-    city = models.CharField(max_length=100)
+    city = models.CharField(choices=CITY_CHOICES, max_length=100)
     gender = models.CharField(choices=GENDER_CHOICES, max_length=10, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
@@ -247,55 +288,70 @@ class SubTasksModel(models.Model):
     subtask_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
 
 # Junction models (they turn what would be many-to-many relationships to 2 x one-to-many relationships)
-class UsersLifestagesJunctionModel(models.Model):
+class UsersLifestages(models.Model):
     """Junction model between users and lifestages"""
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="lifestages")
-    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.PROTECT, related_name="users")
+    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_lifestages")
+    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.PROTECT, related_name="lifestage_users")
 
-class ResourcesUsersJunctionModel(models.Model):
+class ResourcesUsers(models.Model):
     """Junction model between users and resources"""
+    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_users")
     user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
-    resource = models.ForeignKey(ResourcesModel, on_delete=models.CASCADE, related_name="resource_users")
 
-class ResourcesMilestonesJunctionModel(models.Model):
-    """Junction model between users and resources"""
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
-    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="resource_milestones")
+class ResourcesMilestones(models.Model):
+    """Junction model between resources and milestones"""
+    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_milestones")
+    milestone = models.ForeignKey(MilestonesModel, on_delete=models.PROTECT, related_name="milestone_resources")
 
-class ResourcesTasksJunctionModel(models.Model):
-    """Junction model between users and resources"""
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
-    task = models.ForeignKey(TasksModel, on_delete=models.CASCADE, related_name="resource_tasks")
+class ResourcesTasks(models.Model):
+    """Junction model between resources and tasks"""
+    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_tasks")
+    task = models.ForeignKey(TasksModel, on_delete=models.PROTECT, related_name="task_resources")
 
-class ResourcesAreasJunctionModel(models.Model):
-    """Junction model between users and resources"""
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
-    area = models.ForeignKey(AreasModel, on_delete=models.CASCADE, related_name="resource_areas")
+class ResourcesAreas(models.Model):
+    """Junction model between resources and areas"""
+    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_areas")
+    area = models.ForeignKey(AreasModel, on_delete=models.PROTECT, related_name="area_resources")
 
-class ResourcesLifestagesJunctionModel(models.Model):
-    """Junction model between users and resources"""
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
-    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.CASCADE, related_name="resource_lifestages")
+class ResourcesLifestages(models.Model):
+    """Junction model between resources and lifestages"""
+    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_lifestages")
+    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.PROTECT, related_name="lifestage_resources")
 
-class ResourcesProjectsJunctionModel(models.Model):
-    """Junction model between users and resources"""
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
-    project = models.ForeignKey(ProjectsModel, on_delete=models.CASCADE, related_name="resource_projects")
+class ResourcesProjects(models.Model):
+    """Junction model between resources and projects"""
+    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_projects")
+    project = models.ForeignKey(ProjectsModel, on_delete=models.PROTECT, related_name="project_resources")
 
-class ResourcesSubTasksJunctionModel(models.Model):
-    """Junction model between users and resources"""
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
-    subtasks = models.ForeignKey(SubTasksModel, on_delete=models.CASCADE, related_name="resource_subtasks")
+class ResourcesSubTasks(models.Model):
+    """Junction model between resources and subtasks"""
+    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_subtasks")
+    subtask = models.ForeignKey(SubTasksModel, on_delete=models.PROTECT, related_name="subtask_resources")
 
-class MilestonesLifestagesJunctionModel(models.Model):
+class MilestonesLifestages(models.Model):
     """Junction model between milestones and lifestages"""
-    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestones")
-    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.CASCADE, related_name="lifestages")
+    milestone = models.ForeignKey(MilestonesModel, on_delete=models.PROTECT, related_name="milestone_lifestages")
+    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.CASCADE, related_name="lifestage_milestones")
 
-class MilestonesProjectsJunctionModel(models.Model):
+class MilestonesProjects(models.Model):
     """Junction model between milestones and projects"""
-    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestones")
-    project = models.ForeignKey(ProjectsModel, on_delete=models.CASCADE, related_name="projects")
+    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_projects")
+    project = models.ForeignKey(ProjectsModel, on_delete=models.PROTECT, related_name="project_milestones")
+
+class MilestonesTasks(models.Model):
+    """Junction model between milestones and tasks"""
+    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_tasks")
+    task = models.ForeignKey(TasksModel, on_delete=models.PROTECT, related_name="task_milestones")
+
+class MilestonesSubtasks(models.Model):
+    """Junction model between milestones and subtasks"""
+    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_subtasks")
+    subtask = models.ForeignKey(SubTasksModel, on_delete=models.PROTECT, related_name="subtask_milestones")
+
+class LifestagesAreas(models.Model):
+    """Junction model between lifestages and areas"""
+    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.CASCADE, related_name="lifestage_areas")
+    area = models.ForeignKey(AreasModel, on_delete=models.PROTECT, related_name="area_lifestages")
 
 """
 Notes for myself:
