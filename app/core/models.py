@@ -251,8 +251,8 @@ class TasksModel(models.Model):
     task_deadline = models.DateTimeField()
     task_start = models.DateTimeField()
     task_end = models.DateTimeField()
-    # Missing task_tags (under review for normalisation of DB)
     task_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
+    # Missing task_tags (under review for normalisation of DB)
 
 class SubTasksModel(models.Model):
     """Database model for sub-tasks"""
@@ -285,6 +285,7 @@ class SubTasksModel(models.Model):
     subtask_start = models.DateTimeField()
     subtask_end = models.DateTimeField()
     subtask_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
+    # Missing task_tags (under review for normalisation of DB)
 
 # Junction models (they turn what would be many-to-many relationships to 2 x one-to-many relationships)
 class UsersLifestages(models.Model):

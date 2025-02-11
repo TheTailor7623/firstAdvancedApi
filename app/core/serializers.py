@@ -113,7 +113,7 @@ class AreasSerializer(serializers.Serializer):
     """Serializer for CRUD database operations on the resource model"""
     area_id = serializers.IntegerField(read_only=True)
     area_title = serializers.CharField(max_length=255)
-    area_description = serializers.CharField(max_length=2000, allow_blank=True)
+    area_description = serializers.CharField(allow_blank=True)
     area_importance_level = serializers.ChoiceField(choices=models.AreasModel.IMPORTANCE_LEVEL_CHOICES, max_length=15)
     area_importance_magnitude = serializers.IntegerField(min_value=0, max_value=15)
     area_urgency_level = serializers.ChoiceField(choices=models.AreasModel.URGENCY_LEVEL_CHOICES, max_length=15)
@@ -139,6 +139,118 @@ class AreasSerializer(serializers.Serializer):
         instance.area_start = validated_data.get("area_start", instance.area_start)
         instance.area_end = validated_data.get("area_end", instance.area_end)
         instance.area_status = validated_data.get("area_status", instance.area_status)
+
+        instance.save()
+
+        return instance
+
+# Milestones model serializers (GET, POST, PUT, PATCH, DELETE)
+class MilestonesSerializer(serializers.Serializer):
+    """Serializer for CRUD database operations on the milestones model"""
+    milestone_id = serializers.IntegerField(read_only=True)
+    milestone_title = serializers.CharField(max_length=255)
+    milestone_description = serializers.CharField(allow_blank=True)
+
+    # Custom create logic (Crud)
+    def create(self, validated_data):
+        """Creates a milestone and returns the record"""
+        return models.MilestonesModel.objects.create(**validated_data)
+
+    # Custom update logic (crUd)
+    def update(self, instance, validated_data):
+        """Updates a milestone and returns the updated record"""
+        instance.milestone_title = validated_data.get("milestone_title", instance.milestone_title)
+        instance.milestone_description = validated_data.get("milestone_description", instance.milestone_description)
+
+        instance.save()
+
+        return instance
+
+# Projects model serializers (GET, POST, PUT, PATCH, DELETE)
+class ProjectsSerializer(serializers.Serializer):
+    """Serializer for CRUD database operations on the projects model"""
+    project_id = serializers.IntegerField(read_only=True)
+    project_title = serializers.CharField(max_length=255)
+    project_description = serializers.CharField(allow_blank=True)
+    project_importance_level = serializers.ChoiceField(choices=models.ProjectsModel.IMPORTANCE_LEVEL_CHOICES, max_length=15)
+    project_importance_magnitude = serializers.IntegerField(min_value=0, max_value=15)
+    project_urgency_level = serializers.ChoiceField(choices=models.ProjectsModel.URGENCY_LEVEL_CHOICES, max_length=15)
+    project_urgency_magnitude = serializers.IntegerField(min_value=0, max_value=15)
+    project_deadline = serializers.DateField()
+    project_start = serializers.DateField()
+    project_end = serializers.DateField()
+    project_status = serializers.ChoiceField(choices=models.ProjectsModel.STATUS_CHOICES, max_length=10)
+
+    # Custom create logic (Crud)
+    def create(self, validated_data):
+        """Creates a project and returns the record"""
+        return models.ProjectsModel.objects.create(**validated_data)
+
+    # Custom update logic (crUd)
+    def update(self, instance, validated_data):
+        """Updates a project and returns the updated record"""
+        instance.project_title = validated_data.get("project_title", instance.project_title)
+        instance.project_description = validated_data.get("project_description", instance.project_description)
+
+        instance.save()
+
+        return instance
+
+# Tasks model serializers (GET, POST, PUT, PATCH, DELETE)
+class TasksSerializer(serializers.Serializer):
+    """Serializer for CRUD database operations on the tasks model"""
+    task_id = serializers.IntegerField(read_only=True)
+    task_title = serializers.CharField(max_length=255)
+    task_description = serializers.CharField(allow_blank=True)
+    task_importance_level = serializers.ChoiceField(choices=models.TasksModel.IMPORTANCE_LEVEL_CHOICES, max_length=15)
+    task_importance_magnitude = serializers.IntegerField(min_value=0, max_value=15)
+    task_urgency_level = serializers.ChoiceField(choices=models.TasksModel.URGENCY_LEVEL_CHOICES, max_length=15)
+    task_urgency_magnitude = serializers.IntegerField(min_value=0, max_value=15)
+    task_deadline = serializers.DateField()
+    task_start = serializers.DateField()
+    task_end = serializers.DateField()
+    task_status = serializers.ChoiceField(choices=models.TasksModel.STATUS_CHOICES, max_length=10)
+
+    # Custom create logic (Crud)
+    def create(self, validated_data):
+        """Creates a task and returns the record"""
+        return models.TasksModel.objects.create(**validated_data)
+
+    # Custom update logic (crUd)
+    def update(self, instance, validated_data):
+        """Updates a task and returns the updated record"""
+        instance.task_title = validated_data.get("task_title", instance.task_title)
+        instance.task_description = validated_data.get("task_description", instance.task_description)
+
+        instance.save()
+
+        return instance
+
+# Subtasks model serializers (GET, POST, PUT, PATCH, DELETE)
+class SubtasksSerializer(serializers.Serializer):
+    """Serializer for CRUD database operations on the subtasks model"""
+    subtask_id = serializers.IntegerField(read_only=True)
+    subtask_title = serializers.CharField(max_length=255)
+    subtask_description = serializers.CharField(allow_blank=True)
+    subtask_importance_level = serializers.ChoiceField(choices=models.SubTasksModel.IMPORTANCE_LEVEL_CHOICES, max_length=15)
+    subtask_importance_magnitude = serializers.IntegerField(min_value=0, max_value=15)
+    subtask_urgency_level = serializers.ChoiceField(choices=models.SubTasksModel.URGENCY_LEVEL_CHOICES, max_length=15)
+    subtask_urgency_magnitude = serializers.IntegerField(min_value=0, max_value=15)
+    subtask_deadline = serializers.DateField()
+    subtask_start = serializers.DateField()
+    subtask_end = serializers.DateField()
+    subtask_status = serializers.ChoiceField(choices=models.SubTasksModel.STATUS_CHOICES, max_length=10)
+
+    # Custom create logic (Crud)
+    def create(self, validated_data):
+        """Creates a subtask and returns the record"""
+        return models.SubTasksModel.objects.create(**validated_data)
+
+    # Custom update logic (crUd)
+    def update(self, instance, validated_data):
+        """Updates a subtask and returns the updated record"""
+        instance.subtask_title = validated_data.get("subtask_title", instance.subtask_title)
+        instance.subtask_description = validated_data.get("subtask_description", instance.subtask_description)
 
         instance.save()
 

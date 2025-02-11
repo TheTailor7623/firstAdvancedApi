@@ -78,13 +78,21 @@ REST FRAMEWORK NOTES:
             * delete/ (Delete)
     * Milestones/
         * create-milestone/ (Create)
-        * <int:milestone_id>/ (Read, Update, Delete)
+        * <int:milestone_id>/ (Read)
+            * update/ (Update)
+            * delete/ (Delete)
     * Projects/
         * create-project/ (Create)
-        * <int:project_id>/ (Read, Update, Delete)
+        * <int:project_id>/ (Read)
+            * update/ (Update)
+            * delete/ (Delete)
     * Tasks/
         * create-task/ (Create)
-        * <int:task_id>/ (Read, Update, Delete)
+        * <int:task_id>/ (Read)
+            * update/ (Update)
+            * delete/ (Delete)
     * Subtasks/
         * create-subtask/ (Create)
-        * <int:subtask_id>/ (Read, Update, Delete)
+        * <int:subtask_id>/ (Read)
+            * update/ (Update)
+            * delete/ (Delete)
