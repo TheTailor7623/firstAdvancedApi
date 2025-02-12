@@ -38,6 +38,7 @@ Knowledge gaps:
 * Different assertions that can be made
 * List comprehensions and filtering data
 * Data manipulation (string, integer etc... but mainly string)
+* Quering model and DB
 
 REST FRAMEWORK NOTES:
 * Creating a user model
@@ -96,3 +97,7 @@ REST FRAMEWORK NOTES:
         * <int:subtask_id>/ (Read)
             * update/ (Update)
             * delete/ (Delete)
+
+Documentations referenced:
+* https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html#signing-key
+* https://www.django-rest-framework.org/api-guide/authentication/

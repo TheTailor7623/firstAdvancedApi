@@ -11,11 +11,12 @@ from core import serializers, models
 """
 Core application APIs
 
-12/02/2025
-"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczOTQ0NDA5MywiaWF0IjoxNzM5MzU3NjkzLCJqdGkiOiJhMTczMzFjZWYzZjk0ZjZlYjk0ZGRiMWQ1NjhmZTVkOSIsInVzZXJfaWQiOjF9.itbhF4ncWP_trTvBTDSziy8hpeyC0cGuwb9BUb_Pygw",
-"access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5MzU5NDkzLCJpYXQiOjE3MzkzNTc2OTMsImp0aSI6IjhlNWQxZDVkNTcxMDRmZDA4OTVhNTMxNWViOTk1OGQ3IiwidXNlcl9pZCI6MX0.ymL4hzPwbbzaWzOMDYqjkBfnnNRywpH8iyAdZo87aDo"
+test2@example.com
+test2
+"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczOTQ1MTQ3NSwiaWF0IjoxNzM5MzY1MDc1LCJqdGkiOiIwNmNlYjVlNjhmMDU0N2Y4ODg4YzRlZjhkYTk0ZDM4NiIsInVzZXJfaWQiOjN9.fUTsdL1Ywt20-4vNQJAE5JJMM57hgGs5TLC9hDlypss",
+"access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5MzY2ODc1LCJpYXQiOjE3MzkzNjUwNzUsImp0aSI6Ijk3ZmU4OGE5NDEyOTQ0MzQ5YzRhYTVmNWU4MmM3Mzk0IiwidXNlcl9pZCI6M30.ftFayfm2I9HZdd79Gst33HfgY1dJV6GpAMAoepG6bDs"
 """
-# Dashboard API
+# Dashboard API endpoints
 class dashboardApi(APIView):
     """Api displaying all endpoints"""
     def get(self, request, format=None):
@@ -24,7 +25,9 @@ class dashboardApi(APIView):
             "Dashboard":"http://127.0.0.1:8000/api/dashboard",
             "User registration":"http://127.0.0.1:8000/api/users/register",
             "Token/Login":"http://127.0.0.1:8000/api/users/token",
-            "Token refres/re-login":"http://127.0.0.1:8000/api/users/token/refresh",
+            "Token refresh/re-login":"http://127.0.0.1:8000/api/users/token/refresh",
+            "Resources":"http://127.0.0.1:8000/api/resources",
+            "Create resource":"http://127.0.0.1:8000/api/resources/create-resource",
         }
 
         return Response(
@@ -34,7 +37,7 @@ class dashboardApi(APIView):
             status=status.HTTP_200_OK
         )
 
-# User APIs
+# User API endpoints
 class registerUserApi(APIView):
     """Api for user registration"""
     serializer_class=serializers.RegisterUserSerializer
@@ -57,15 +60,11 @@ class registerUserApi(APIView):
 class userProfileApi(APIView):
     """Api for viewing user profile"""
     serializer_class = serializers.UserProfileSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
-    def get(self, request, user_id, format=None):
+    def get(self, request, format=None):
         """Handles GET requests to the user profile API endpoint"""
-        try:
-            user = models.UsersModel.objects.get(user_id=user_id)
-        except models.UsersModel.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
+        user = request.user
         serialized_data = self.serializer_class(user)
         return Response({"User information": serialized_data.data}, status=status.HTTP_200_OK)
 
@@ -97,5 +96,47 @@ class userProfileApi(APIView):
             )
         return Response(
             {"User profile partial update unsuccessful❌":serialized_data.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+# Resources API endpoints
+class resourcesApi(APIView):
+    """Api for viewing resources from the resources mode"""
+    serializer_class=serializers.ResourceSerializer
+    permission_classes=[IsAuthenticated,]
+
+    def get(self, request, format=None):
+        """Handles GET requests to the resourcesCreateApi endpoint"""
+        user=request.user
+        # user_resources=models.ResourcesUsers.objects.filter(user=user).select_related("resource")
+        user_resources=models.ResourcesUsers.objects.filter(user=user)
+
+        # resources=[relation.resource for relation in user_resources]
+        resources=[]
+        for relation in user_resources:
+            resources.append(relation.resource)
+        serialized_data=self.serializer_class(resources, many=True)
+
+        return Response(
+            {"User resources:":serialized_data.data},
+            status=status.HTTP_200_OK,
+        )
+
+class resourcesCreateApi(APIView):
+    """Api for creating a resource in the resources model"""
+    serializer_class=serializers.ResourceSerializer
+    permission_classes=[IsAuthenticated,]
+
+    def post(self, request, format=None):
+        """Handles POST requests to the resourcesCreateApi endpoint"""
+        serialized_data=self.serializer_class(data=request.data, context={"request":request})
+        if serialized_data.is_valid():
+            serialized_data.save()
+            return Response(
+                {"Resource creation successful✅":serialized_data.data},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"Resource creation unsuccessful❌":serialized_data.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )

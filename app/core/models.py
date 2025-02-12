@@ -143,6 +143,9 @@ class ResourcesModel(models.Model):
     resource_quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
     # Missing resource_allocation (under review for normalisation of DB)
 
+    def __str__(self):
+        return f"{self.resource_type}"
+
 class MilestonesModel(models.Model):
     """Database model for milestones"""
     milestone_id = models.AutoField(primary_key=True)
@@ -187,7 +190,7 @@ class AreasModel(models.Model):
     )
 
     def __str__(self):
-        return f"{self.area_title} - {self.area_status}"
+        return f"{self.area_title}"
 
 class ProjectsModel(models.Model):
     """Database model for projects"""
@@ -297,6 +300,9 @@ class ResourcesUsers(models.Model):
     """Junction model between users and resources"""
     resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_users")
     user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
+
+    def __str__(self):
+        return f"Resource: {self.resource}, user: {self.user}"
 
 class ResourcesMilestones(models.Model):
     """Junction model between resources and milestones"""

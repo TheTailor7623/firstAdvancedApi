@@ -98,7 +98,13 @@ class ResourceSerializer(serializers.Serializer):
     # Custom Create logic (Crud)
     def create(self, validated_data):
         """Creates a resource and returns the record"""
-        return models.ResourcesModel.objects.create(**validated_data)
+        request = self.context["request"]
+        user = request.user
+
+        resource = models.ResourcesModel.objects.create(**validated_data)
+        models.ResourcesUsers.objects.create(user=user, resource=resource)
+
+        return resource
 
     # Custom update logic (crUd)
     def update(self, instance, validated_data):
