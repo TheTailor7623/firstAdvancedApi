@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from rest_framework import status
 
@@ -9,6 +10,10 @@ from core import serializers, models
 
 """
 Core application APIs
+
+12/02/2025
+"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczOTQ0NDA5MywiaWF0IjoxNzM5MzU3NjkzLCJqdGkiOiJhMTczMzFjZWYzZjk0ZjZlYjk0ZGRiMWQ1NjhmZTVkOSIsInVzZXJfaWQiOjF9.itbhF4ncWP_trTvBTDSziy8hpeyC0cGuwb9BUb_Pygw",
+"access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5MzU5NDkzLCJpYXQiOjE3MzkzNTc2OTMsImp0aSI6IjhlNWQxZDVkNTcxMDRmZDA4OTVhNTMxNWViOTk1OGQ3IiwidXNlcl9pZCI6MX0.ymL4hzPwbbzaWzOMDYqjkBfnnNRywpH8iyAdZo87aDo"
 """
 # Dashboard API
 class dashboardApi(APIView):
@@ -18,6 +23,8 @@ class dashboardApi(APIView):
         apiEndpointList = {
             "Dashboard":"http://127.0.0.1:8000/api/dashboard",
             "User registration":"http://127.0.0.1:8000/api/users/register",
+            "Token/Login":"http://127.0.0.1:8000/api/users/token",
+            "Token refres/re-login":"http://127.0.0.1:8000/api/users/token/refresh",
         }
 
         return Response(
@@ -50,6 +57,7 @@ class registerUserApi(APIView):
 class userProfileApi(APIView):
     """Api for viewing user profile"""
     serializer_class = serializers.UserProfileSerializer
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id, format=None):
         """Handles GET requests to the user profile API endpoint"""
@@ -73,5 +81,21 @@ class userProfileApi(APIView):
             )
         return Response(
             {"User profile update unsuccessful❌":serialized_data.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def patch(self, request, format=None):
+        """Handles PATCH requests to the user profile endpoint"""
+
+        serialized_data = self.serializer_class(data=request.data)
+
+        if serialized_data.is_valid():
+            serialized_data.save()
+            return Response(
+                {"User profile partially update successful✅":serialized_data.data},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"User profile partial update unsuccessful❌":serialized_data.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
