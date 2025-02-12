@@ -10,14 +10,14 @@ from rest_framework.authtoken.models import Token
 # User model serializers
 class RegisterUserSerializer(serializers.ModelSerializer):
     """Serializer for registration of a new user in our user model"""
-    password_confirmation_field = serializers.CharField(
+    confirm_password = serializers.CharField(
         write_only=True,
         style={"input_type":"password"},
     )
 
     class Meta:
         model = models.UsersModel
-        fields = ("id", "email", "firstname", "password", "password_confirmation_field")
+        fields = ("email", "firstname", "surname", "date_of_birth", "city", "password", "confirm_password")
         extra_kwargs = {
             "password":{
                 "write_only":True,
@@ -25,18 +25,21 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             }
         }
 
-    def validate_passwords_match(self, data):
+    def validate(self, data):
         """Ensure password entered twice for registration match"""
-        if data["password"] != data["password_confirmation_field"]:
+        if data["password"] != data["confirm_password"]:
             raise serializers.ValidationError({"password":"Passwords do not match"})
         return data
 
     def create(self, validated_data):
         """Overrid usual create method with out custom user model manager create method to hash password"""
-        validated_data.pop("password_confirmation_field")
+        validated_data.pop("confirm_password")
         user = models.UsersModel.objects.create_user(
             email=validated_data["email"],
             firstname=validated_data["firstname"],
+            surname=validated_data["surname"],
+            date_of_birth=validated_data["date_of_birth"],
+            city=validated_data["city"],
             password=validated_data["password"]
         )
         return user
@@ -59,6 +62,31 @@ class LoginUserSerializer(serializers.Serializer):
             "user": user,
             "token": Token.objects.get(user=user).key,
         }
+
+class UserProfileSerializer(serializers.Serializer):
+    """Serializer for CRUD database operations on the user model"""
+    user_id = serializers.IntegerField(read_only=True)
+    email = serializers.EmailField(max_length=255)
+    firstname = serializers.CharField(max_length=100)
+    surname = serializers.CharField(max_length=100)
+    date_of_birth = serializers.DateField()
+    city = serializers.ChoiceField(choices=models.UsersModel.CITY_CHOICES)
+    gender = serializers.ChoiceField(choices=models.UsersModel.GENDER_CHOICES)
+
+    # Custom update logic (crUd)
+    def update(self, instance, validated_data):
+        """Updates a resource and returns the updated record"""
+        instance.email = validated_data.get("email", instance.email)
+        instance.firstname = validated_data.get("firstname", instance.firstname)
+        instance.surname = validated_data.get("surname", instance.surname)
+        instance.date_of_birth = validated_data.get("date_of_birth", instance.date_of_birth)
+        instance.city = validated_data.get("city", instance.city)
+        instance.gender = validated_data.get("gender", instance.gender)
+
+        instance.save()
+
+        return instance
+
 
 # Resources model serializers (GET, POST, PUT, PATCH, DELETE)
 class ResourceSerializer(serializers.Serializer):
@@ -114,13 +142,13 @@ class AreasSerializer(serializers.Serializer):
     area_id = serializers.IntegerField(read_only=True)
     area_title = serializers.CharField(max_length=255)
     area_description = serializers.CharField(allow_blank=True)
-    area_importance_level = serializers.ChoiceField(choices=models.AreasModel.IMPORTANCE_LEVEL_CHOICES, max_length=15)
+    area_importance_level = serializers.ChoiceField(choices=models.AreasModel.IMPORTANCE_LEVEL_CHOICES)
     area_importance_magnitude = serializers.IntegerField(min_value=0, max_value=15)
-    area_urgency_level = serializers.ChoiceField(choices=models.AreasModel.URGENCY_LEVEL_CHOICES, max_length=15)
+    area_urgency_level = serializers.ChoiceField(choices=models.AreasModel.URGENCY_LEVEL_CHOICES)
     area_urgency_magnitude = serializers.IntegerField(min_value=0, max_value=15)
     area_start = serializers.DateField()
     area_end = serializers.DateField()
-    area_status = serializers.ChoiceField(choices=models.AreasModel.STATUS_CHOICES, max_length=10)
+    area_status = serializers.ChoiceField(choices=models.AreasModel.STATUS_CHOICES)
 
     # Custom create logic (Crud)
     def create(self, validated_data):
@@ -172,14 +200,14 @@ class ProjectsSerializer(serializers.Serializer):
     project_id = serializers.IntegerField(read_only=True)
     project_title = serializers.CharField(max_length=255)
     project_description = serializers.CharField(allow_blank=True)
-    project_importance_level = serializers.ChoiceField(choices=models.ProjectsModel.IMPORTANCE_LEVEL_CHOICES, max_length=15)
+    project_importance_level = serializers.ChoiceField(choices=models.ProjectsModel.IMPORTANCE_LEVEL_CHOICES)
     project_importance_magnitude = serializers.IntegerField(min_value=0, max_value=15)
-    project_urgency_level = serializers.ChoiceField(choices=models.ProjectsModel.URGENCY_LEVEL_CHOICES, max_length=15)
+    project_urgency_level = serializers.ChoiceField(choices=models.ProjectsModel.URGENCY_LEVEL_CHOICES)
     project_urgency_magnitude = serializers.IntegerField(min_value=0, max_value=15)
     project_deadline = serializers.DateField()
     project_start = serializers.DateField()
     project_end = serializers.DateField()
-    project_status = serializers.ChoiceField(choices=models.ProjectsModel.STATUS_CHOICES, max_length=10)
+    project_status = serializers.ChoiceField(choices=models.ProjectsModel.STATUS_CHOICES)
 
     # Custom create logic (Crud)
     def create(self, validated_data):
@@ -202,14 +230,14 @@ class TasksSerializer(serializers.Serializer):
     task_id = serializers.IntegerField(read_only=True)
     task_title = serializers.CharField(max_length=255)
     task_description = serializers.CharField(allow_blank=True)
-    task_importance_level = serializers.ChoiceField(choices=models.TasksModel.IMPORTANCE_LEVEL_CHOICES, max_length=15)
+    task_importance_level = serializers.ChoiceField(choices=models.TasksModel.IMPORTANCE_LEVEL_CHOICES)
     task_importance_magnitude = serializers.IntegerField(min_value=0, max_value=15)
-    task_urgency_level = serializers.ChoiceField(choices=models.TasksModel.URGENCY_LEVEL_CHOICES, max_length=15)
+    task_urgency_level = serializers.ChoiceField(choices=models.TasksModel.URGENCY_LEVEL_CHOICES)
     task_urgency_magnitude = serializers.IntegerField(min_value=0, max_value=15)
     task_deadline = serializers.DateField()
     task_start = serializers.DateField()
     task_end = serializers.DateField()
-    task_status = serializers.ChoiceField(choices=models.TasksModel.STATUS_CHOICES, max_length=10)
+    task_status = serializers.ChoiceField(choices=models.TasksModel.STATUS_CHOICES)
 
     # Custom create logic (Crud)
     def create(self, validated_data):
@@ -232,14 +260,14 @@ class SubtasksSerializer(serializers.Serializer):
     subtask_id = serializers.IntegerField(read_only=True)
     subtask_title = serializers.CharField(max_length=255)
     subtask_description = serializers.CharField(allow_blank=True)
-    subtask_importance_level = serializers.ChoiceField(choices=models.SubTasksModel.IMPORTANCE_LEVEL_CHOICES, max_length=15)
+    subtask_importance_level = serializers.ChoiceField(choices=models.SubTasksModel.IMPORTANCE_LEVEL_CHOICES)
     subtask_importance_magnitude = serializers.IntegerField(min_value=0, max_value=15)
-    subtask_urgency_level = serializers.ChoiceField(choices=models.SubTasksModel.URGENCY_LEVEL_CHOICES, max_length=15)
+    subtask_urgency_level = serializers.ChoiceField(choices=models.SubTasksModel.URGENCY_LEVEL_CHOICES)
     subtask_urgency_magnitude = serializers.IntegerField(min_value=0, max_value=15)
     subtask_deadline = serializers.DateField()
     subtask_start = serializers.DateField()
     subtask_end = serializers.DateField()
-    subtask_status = serializers.ChoiceField(choices=models.SubTasksModel.STATUS_CHOICES, max_length=10)
+    subtask_status = serializers.ChoiceField(choices=models.SubTasksModel.STATUS_CHOICES)
 
     # Custom create logic (Crud)
     def create(self, validated_data):
