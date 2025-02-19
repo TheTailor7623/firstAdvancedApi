@@ -13,7 +13,7 @@ Core application APIs
 test@example.com
 {
     "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MDA1NzI0OCwiaWF0IjoxNzM5OTcwODQ4LCJqdGkiOiI3MzQ5YzMzODE3Njc0YzcyYTRlMTY3YjExNGNkZTBmMCIsInVzZXJfaWQiOjJ9.Q-yPFANXaiLQOR-IBTbeZ9xZqVQa5dgO4hA_X-SvByY",
-    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5OTcyNjQ4LCJpYXQiOjE3Mzk5NzA4NDgsImp0aSI6IjU5Mzk3MmQ3YjAxMjQ4YjNiODBmYzgzNWQ4ZDBlZmUzIiwidXNlcl9pZCI6Mn0.QEal0-mFEAP-4XXJJtzP9EU-3PkBeIuQhO4WMWe9oss"
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5OTc4MTI3LCJpYXQiOjE3Mzk5NzA4NDgsImp0aSI6IjZlYThlMmNkMDYwODQ1NjdhZmYwMWNjNjBjNTQ2Y2ViIiwidXNlcl9pZCI6Mn0.A7C1-N6AbjN7LZ50nf43lPEr4Hs8NHtRzjdMTyLrisQ"
 }
 """
 # Dashboard API endpoints
@@ -142,23 +142,38 @@ class newTaskApi(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+# class taskDetailsApi(APIView):
+#     """Api to update a task for a specific user"""
+#     serializer_class = serializers.TasksSerializer
+#     permission_classes = [IsAuthenticated,]
+
+#     def get(self, request, task_id, format=None):
+#         """Handles GET request to the task details api endpoint"""
+#         user = request.user
+#         task = models.TasksModel.objects.filter(user=user, task_id=task_id)
+#         serialized_data = self.serializer_class(data=task)
+
+#         if serialized_data.is_valid():
+#             return Response(
+#                 {"Task details:":serialized_data.data},
+#                 status=status.HTTP_200_OK,
+#             )
+#         return Response(
+#             {"Task not retrieved successfully❌":serialized_data.errors},
+#             status=status.HTTP_400_BAD_REQUEST,
+#         )
+
 class taskDetailsApi(APIView):
-    """Api to update a task for a specific user"""
+    """API to get a specific task"""
     serializer_class = serializers.TasksSerializer
     permission_classes = [IsAuthenticated,]
 
     def get(self, request, task_id, format=None):
-        """Handles GET request to the task details api endpoint"""
+        """Handles GET request to retrieve task details"""
         user = request.user
-        task = models.TasksModel.objects.filter(user=user, task_id=task_id)
-        serialized_data = self.serializer_class(data=task)
-
-        if serialized_data.is_valid():
-            return Response(
-                {"Task details:":serialized_data.data},
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            {"Task not retrieved successfully❌":serialized_data.errors},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        try:
+            task = models.TasksModel.objects.get(user=user, task_id=task_id)
+            serialized_data = self.serializer_class(task)
+            return Response({"Task details": serialized_data.data}, status=status.HTTP_200_OK)
+        except models.TasksModel.DoesNotExist:
+            return Response({"error": "Task not found❌"}, status=status.HTTP_404_NOT_FOUND)
