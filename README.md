@@ -62,42 +62,15 @@ REST FRAMEWORK NOTES:
         * <int:user_id>/ (Read, Update, Delete)
         * login/
             * Forgot-Password/
-    * Resources/
-        * create-resource/ (Create)
-        * <int:resource_id>/ (Read)
-            * update/ (Update)
-            * delete/ (Delete)
-    * Lifestages/
-        * create-lifestage/ (Create)
-        * <int:lifestage_id>/ (Read)
-            * update/ (Update)
-            * delete/ (Delete)
-    * Areas/
-        * create-area/ (Create)
-        * <int:area_id>/ (Read)
-            * update/ (Update)
-            * delete/ (Delete)
-    * Milestones/
-        * create-milestone/ (Create)
-        * <int:milestone_id>/ (Read)
-            * update/ (Update)
-            * delete/ (Delete)
-    * Projects/
-        * create-project/ (Create)
-        * <int:project_id>/ (Read)
-            * update/ (Update)
-            * delete/ (Delete)
     * Tasks/
         * create-task/ (Create)
         * <int:task_id>/ (Read)
-            * update/ (Update)
-            * delete/ (Delete)
-    * Subtasks/
-        * create-subtask/ (Create)
-        * <int:subtask_id>/ (Read)
             * update/ (Update)
             * delete/ (Delete)
 
 Documentations referenced:
 * https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html#signing-key
 * https://www.django-rest-framework.org/api-guide/authentication/
+
+Skill gaps:
+* Querying a DB

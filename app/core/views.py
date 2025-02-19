@@ -10,11 +10,11 @@ from core import serializers, models
 
 """
 Core application APIs
-
-test2@example.com
-test2
-"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczOTQ1MTQ3NSwiaWF0IjoxNzM5MzY1MDc1LCJqdGkiOiIwNmNlYjVlNjhmMDU0N2Y4ODg4YzRlZjhkYTk0ZDM4NiIsInVzZXJfaWQiOjN9.fUTsdL1Ywt20-4vNQJAE5JJMM57hgGs5TLC9hDlypss",
-"access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5MzY2ODc1LCJpYXQiOjE3MzkzNjUwNzUsImp0aSI6Ijk3ZmU4OGE5NDEyOTQ0MzQ5YzRhYTVmNWU4MmM3Mzk0IiwidXNlcl9pZCI6M30.ftFayfm2I9HZdd79Gst33HfgY1dJV6GpAMAoepG6bDs"
+test@example.com
+{
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MDA1NzI0OCwiaWF0IjoxNzM5OTcwODQ4LCJqdGkiOiI3MzQ5YzMzODE3Njc0YzcyYTRlMTY3YjExNGNkZTBmMCIsInVzZXJfaWQiOjJ9.Q-yPFANXaiLQOR-IBTbeZ9xZqVQa5dgO4hA_X-SvByY",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5OTcyNjQ4LCJpYXQiOjE3Mzk5NzA4NDgsImp0aSI6IjU5Mzk3MmQ3YjAxMjQ4YjNiODBmYzgzNWQ4ZDBlZmUzIiwidXNlcl9pZCI6Mn0.QEal0-mFEAP-4XXJJtzP9EU-3PkBeIuQhO4WMWe9oss"
+}
 """
 # Dashboard API endpoints
 class dashboardApi(APIView):
@@ -23,11 +23,12 @@ class dashboardApi(APIView):
         """Handles GET requests made to the dashboard API endpoint"""
         apiEndpointList = {
             "Dashboard":"http://127.0.0.1:8000/api/dashboard",
-            "User registration":"http://127.0.0.1:8000/api/users/register",
-            "Token/Login":"http://127.0.0.1:8000/api/users/token",
-            "Token refresh/re-login":"http://127.0.0.1:8000/api/users/token/refresh",
-            "Resources":"http://127.0.0.1:8000/api/resources",
-            "Create resource":"http://127.0.0.1:8000/api/resources/create-resource",
+            "User registration":"http://127.0.0.1:8000/api/user/registration",
+            "Token/Login":"http://127.0.0.1:8000/api/user/token",
+            "Token refresh/re-login":"http://127.0.0.1:8000/api/user/token/refresh",
+            "Tasks":"http://127.0.0.1:8000/api/user/tasks",
+            "Create task":"http://127.0.0.1:8000/api/user/task/new-task",
+            "Specific task":"http://127.0.0.1:8000/api/user/task/task_id",
         }
 
         return Response(
@@ -99,44 +100,65 @@ class userProfileApi(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-# Resources API endpoints
-class resourcesApi(APIView):
-    """Api for viewing resources from the resources mode"""
-    serializer_class=serializers.ResourceSerializer
-    permission_classes=[IsAuthenticated,]
+class tasksApi(APIView):
+    """Api for viewing user tasks"""
+    serializer_class = serializers.TasksSerializer
+    permission_classes = [IsAuthenticated,]
 
     def get(self, request, format=None):
-        """Handles GET requests to the resourcesCreateApi endpoint"""
-        user=request.user
-        # user_resources=models.ResourcesUsers.objects.filter(user=user).select_related("resource")
-        user_resources=models.ResourcesUsers.objects.filter(user=user)
-
-        # resources=[relation.resource for relation in user_resources]
-        resources=[]
-        for relation in user_resources:
-            resources.append(relation.resource)
-        serialized_data=self.serializer_class(resources, many=True)
-
-        return Response(
-            {"User resources:":serialized_data.data},
-            status=status.HTTP_200_OK,
-        )
-
-class resourcesCreateApi(APIView):
-    """Api for creating a resource in the resources model"""
-    serializer_class=serializers.ResourceSerializer
-    permission_classes=[IsAuthenticated,]
-
-    def post(self, request, format=None):
-        """Handles POST requests to the resourcesCreateApi endpoint"""
-        serialized_data=self.serializer_class(data=request.data, context={"request":request})
-        if serialized_data.is_valid():
-            serialized_data.save()
+        """Handles GET requests to the tasks api endpoint"""
+        user = request.user
+        tasks = models.TasksModel.objects.filter(user=user)
+        serialized_data = self.serializer_class(tasks, many=True)
+        if serialized_data.is_valid:
             return Response(
-                {"Resource creation successful✅":serialized_data.data},
+                {"Tasks:":serialized_data.data},
                 status=status.HTTP_200_OK,
             )
         return Response(
-            {"Resource creation unsuccessful❌":serialized_data.errors},
+            {"Retrieval of user tasks unsuccessful❌":serialized_data.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+class newTaskApi(APIView):
+    """Api for creating new tasks"""
+    serializer_class = serializers.TasksSerializer
+    permission_classes = [IsAuthenticated,]
+
+    def post(self, request, format=None):
+        serialized_data = self.serializer_class(data=request.data, context={"user":request.user})
+        if serialized_data.is_valid():
+            serialized_data.save()
+            return Response(
+                {
+                    "Task saved successfully✅":serialized_data.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {
+                "Task information invalid❌":serialized_data.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+class taskDetailsApi(APIView):
+    """Api to update a task for a specific user"""
+    serializer_class = serializers.TasksSerializer
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, task_id, format=None):
+        """Handles GET request to the task details api endpoint"""
+        user = request.user
+        task = models.TasksModel.objects.filter(user=user, task_id=task_id)
+        serialized_data = self.serializer_class(data=task)
+
+        if serialized_data.is_valid():
+            return Response(
+                {"Task details:":serialized_data.data},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"Task not retrieved successfully❌":serialized_data.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )

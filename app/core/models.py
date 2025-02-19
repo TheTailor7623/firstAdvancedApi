@@ -113,117 +113,6 @@ class UsersModel(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.email} - {self.get_full_name()}"
 
-class LifestagesModel(models.Model):
-    """Database model for life stages"""
-    lifestage_id = models.AutoField(primary_key=True)
-    lifestage_title = models.CharField(max_length=255)
-    lifestage_description = models.TextField()
-    lifestage_start = models.DateField()
-    lifestage_end = models.DateField()
-
-    def lifestage_duration(self):
-        return (self.lifestage_end - self.lifestage_start).days
-
-    def __str__(self):
-        return self.lifestage_title
-
-class ResourcesModel(models.Model):
-    """Database model for resources"""
-    resource_type_choices = [
-        ("time", "Time"),
-        ("physical ability", "Physical ability"),
-        ("mental ability", "Mental ability"),
-        ("technology", "Technology"),
-        ("human resources", "Human resources"),
-        ("financial resources", "Financial resources"),
-    ]
-
-    resource_id = models.AutoField(primary_key=True)
-    resource_type = models.CharField(choices=resource_type_choices, max_length=30)
-    resource_quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
-    # Missing resource_allocation (under review for normalisation of DB)
-
-    def __str__(self):
-        return f"{self.resource_type}"
-
-class MilestonesModel(models.Model):
-    """Database model for milestones"""
-    milestone_id = models.AutoField(primary_key=True)
-    milestone_title = models.CharField(max_length=255)
-    milestone_description = models.TextField()
-
-class AreasModel(models.Model):
-    """Database model for areas"""
-    IMPORTANCE_LEVEL_CHOICES = [
-        ("high", "High"),
-        ("intermediate", "Intermediate"),
-        ("low", "Low"),
-    ]
-
-    URGENCY_LEVEL_CHOICES = [
-        ("high", "High"),
-        ("intermediate", "Intermediate"),
-        ("low", "Low"),
-    ]
-
-    STATUS_CHOICES = [
-        ("to-do", "To-do"),
-        ("doing", "Doing"),
-        ("done", "Done"),
-    ]
-
-    area_id = models.AutoField(primary_key=True)
-    area_title = models.CharField(max_length=255)
-    area_description = models.TextField(max_length=2000)
-    area_importance_level = models.CharField(choices=IMPORTANCE_LEVEL_CHOICES, max_length=15)
-    area_importance_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
-    area_urgency_level = models.CharField(choices=URGENCY_LEVEL_CHOICES, max_length=15)
-    area_urgency_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
-    area_start = models.DateField()
-    area_end = models.DateField()
-    area_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
-
-    user = models.ForeignKey(
-        UsersModel,
-        on_delete=models.CASCADE,
-        related_name="areas",
-    )
-
-    def __str__(self):
-        return f"{self.area_title}"
-
-class ProjectsModel(models.Model):
-    """Database model for projects"""
-    IMPORTANCE_LEVEL_CHOICES = [
-        ("high", "High"),
-        ("intermediate", "Intermediate"),
-        ("low", "Low"),
-    ]
-
-    URGENCY_LEVEL_CHOICES = [
-        ("high", "High"),
-        ("intermediate", "Intermediate"),
-        ("low", "Low"),
-    ]
-
-    STATUS_CHOICES = [
-        ("to-do", "To-do"),
-        ("doing", "Doing"),
-        ("done", "Done"),
-    ]
-
-    project_id = models.AutoField(primary_key=True)
-    project_title = models.CharField(max_length=255)
-    project_description = models.TextField()
-    project_importance_level = models.CharField(choices=IMPORTANCE_LEVEL_CHOICES, max_length=15)
-    project_importance_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
-    project_urgency_level = models.CharField(choices=URGENCY_LEVEL_CHOICES, max_length=15)
-    project_urgency_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
-    project_deadline = models.DateField()
-    project_start = models.DateField()
-    project_end = models.DateField()
-    project_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
-
 class TasksModel(models.Model):
     """Database model for tasks"""
     IMPORTANCE_LEVEL_CHOICES = [
@@ -244,6 +133,7 @@ class TasksModel(models.Model):
         ("done", "Done"),
     ]
 
+    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="tasks")
     task_id = models.AutoField(primary_key=True)
     task_title = models.CharField(max_length=255)
     task_description = models.TextField()
@@ -257,110 +147,222 @@ class TasksModel(models.Model):
     task_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
     # Missing task_tags (under review for normalisation of DB)
 
-class SubTasksModel(models.Model):
-    """Database model for sub-tasks"""
-    IMPORTANCE_LEVEL_CHOICES = [
-        ("high", "High"),
-        ("intermediate", "Intermediate"),
-        ("low", "Low"),
-    ]
-
-    URGENCY_LEVEL_CHOICES = [
-        ("high", "High"),
-        ("intermediate", "Intermediate"),
-        ("low", "Low"),
-    ]
-
-    STATUS_CHOICES = [
-        ("to-do", "To-do"),
-        ("doing", "Doing"),
-        ("done", "Done"),
-    ]
-
-    subtask_id = models.AutoField(primary_key=True)
-    subtask_title = models.CharField(max_length=255)
-    subtask_description = models.TextField()
-    subtask_importance_level = models.CharField(choices=IMPORTANCE_LEVEL_CHOICES, max_length=15)
-    subtask_importance_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
-    subtask_urgency_level = models.CharField(choices=URGENCY_LEVEL_CHOICES, max_length=15)
-    subtask_urgency_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
-    subtask_deadline = models.DateTimeField()
-    subtask_start = models.DateTimeField()
-    subtask_end = models.DateTimeField()
-    subtask_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
-    # Missing task_tags (under review for normalisation of DB)
-
-# Junction models (they turn what would be many-to-many relationships to 2 x one-to-many relationships)
-class UsersLifestages(models.Model):
-    """Junction model between users and lifestages"""
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_lifestages")
-    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.PROTECT, related_name="lifestage_users")
-
-class ResourcesUsers(models.Model):
-    """Junction model between users and resources"""
-    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_users")
-    user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
-
-    def __str__(self):
-        return f"Resource: {self.resource}, user: {self.user}"
-
-class ResourcesMilestones(models.Model):
-    """Junction model between resources and milestones"""
-    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_milestones")
-    milestone = models.ForeignKey(MilestonesModel, on_delete=models.PROTECT, related_name="milestone_resources")
-
-class ResourcesTasks(models.Model):
-    """Junction model between resources and tasks"""
-    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_tasks")
-    task = models.ForeignKey(TasksModel, on_delete=models.PROTECT, related_name="task_resources")
-
-class ResourcesAreas(models.Model):
-    """Junction model between resources and areas"""
-    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_areas")
-    area = models.ForeignKey(AreasModel, on_delete=models.PROTECT, related_name="area_resources")
-
-class ResourcesLifestages(models.Model):
-    """Junction model between resources and lifestages"""
-    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_lifestages")
-    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.PROTECT, related_name="lifestage_resources")
-
-class ResourcesProjects(models.Model):
-    """Junction model between resources and projects"""
-    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_projects")
-    project = models.ForeignKey(ProjectsModel, on_delete=models.PROTECT, related_name="project_resources")
-
-class ResourcesSubTasks(models.Model):
-    """Junction model between resources and subtasks"""
-    resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_subtasks")
-    subtask = models.ForeignKey(SubTasksModel, on_delete=models.PROTECT, related_name="subtask_resources")
-
-class MilestonesLifestages(models.Model):
-    """Junction model between milestones and lifestages"""
-    milestone = models.ForeignKey(MilestonesModel, on_delete=models.PROTECT, related_name="milestone_lifestages")
-    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.CASCADE, related_name="lifestage_milestones")
-
-class MilestonesProjects(models.Model):
-    """Junction model between milestones and projects"""
-    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_projects")
-    project = models.ForeignKey(ProjectsModel, on_delete=models.PROTECT, related_name="project_milestones")
-
-class MilestonesTasks(models.Model):
-    """Junction model between milestones and tasks"""
-    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_tasks")
-    task = models.ForeignKey(TasksModel, on_delete=models.PROTECT, related_name="task_milestones")
-
-class MilestonesSubtasks(models.Model):
-    """Junction model between milestones and subtasks"""
-    milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_subtasks")
-    subtask = models.ForeignKey(SubTasksModel, on_delete=models.PROTECT, related_name="subtask_milestones")
-
-class LifestagesAreas(models.Model):
-    """Junction model between lifestages and areas"""
-    lifestage = models.ForeignKey(LifestagesModel, on_delete=models.CASCADE, related_name="lifestage_areas")
-    area = models.ForeignKey(AreasModel, on_delete=models.PROTECT, related_name="area_lifestages")
-
 """
 Notes for myself:
 - Review task_tags they might need to become a model since they are not atomic the user is entering multiple values
 - Review resource_allocation it might need to become a model since they are not atomic the user is entering multiple values
 """
+
+# class LifestagesModel(models.Model):
+#     """Database model for life stages"""
+#     lifestage_id = models.AutoField(primary_key=True)
+#     lifestage_title = models.CharField(max_length=255)
+#     lifestage_description = models.TextField()
+#     lifestage_start = models.DateField()
+#     lifestage_end = models.DateField()
+
+#     def lifestage_duration(self):
+#         return (self.lifestage_end - self.lifestage_start).days
+
+#     def __str__(self):
+#         return self.lifestage_title
+
+# class ResourcesModel(models.Model):
+#     """Database model for resources"""
+#     resource_type_choices = [
+#         ("time", "Time"),
+#         ("physical ability", "Physical ability"),
+#         ("mental ability", "Mental ability"),
+#         ("technology", "Technology"),
+#         ("human resources", "Human resources"),
+#         ("financial resources", "Financial resources"),
+#     ]
+
+#     resource_id = models.AutoField(primary_key=True)
+#     resource_type = models.CharField(choices=resource_type_choices, max_length=30)
+#     resource_quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+#     # Missing resource_allocation (under review for normalisation of DB)
+
+#     def __str__(self):
+#         return f"{self.resource_id} - {self.resource_type}"
+
+# class MilestonesModel(models.Model):
+#     """Database model for milestones"""
+#     milestone_id = models.AutoField(primary_key=True)
+#     milestone_title = models.CharField(max_length=255)
+#     milestone_description = models.TextField()
+
+# class AreasModel(models.Model):
+#     """Database model for areas"""
+#     IMPORTANCE_LEVEL_CHOICES = [
+#         ("high", "High"),
+#         ("intermediate", "Intermediate"),
+#         ("low", "Low"),
+#     ]
+
+#     URGENCY_LEVEL_CHOICES = [
+#         ("high", "High"),
+#         ("intermediate", "Intermediate"),
+#         ("low", "Low"),
+#     ]
+
+#     STATUS_CHOICES = [
+#         ("to-do", "To-do"),
+#         ("doing", "Doing"),
+#         ("done", "Done"),
+#     ]
+
+#     area_id = models.AutoField(primary_key=True)
+#     area_title = models.CharField(max_length=255)
+#     area_description = models.TextField(max_length=2000)
+#     area_importance_level = models.CharField(choices=IMPORTANCE_LEVEL_CHOICES, max_length=15)
+#     area_importance_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
+#     area_urgency_level = models.CharField(choices=URGENCY_LEVEL_CHOICES, max_length=15)
+#     area_urgency_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
+#     area_start = models.DateField()
+#     area_end = models.DateField()
+#     area_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
+
+#     user = models.ForeignKey(
+#         UsersModel,
+#         on_delete=models.CASCADE,
+#         related_name="areas",
+#     )
+
+#     def __str__(self):
+#         return f"{self.area_title}"
+
+# class ProjectsModel(models.Model):
+#     """Database model for projects"""
+#     IMPORTANCE_LEVEL_CHOICES = [
+#         ("high", "High"),
+#         ("intermediate", "Intermediate"),
+#         ("low", "Low"),
+#     ]
+
+#     URGENCY_LEVEL_CHOICES = [
+#         ("high", "High"),
+#         ("intermediate", "Intermediate"),
+#         ("low", "Low"),
+#     ]
+
+#     STATUS_CHOICES = [
+#         ("to-do", "To-do"),
+#         ("doing", "Doing"),
+#         ("done", "Done"),
+#     ]
+
+#     project_id = models.AutoField(primary_key=True)
+#     project_title = models.CharField(max_length=255)
+#     project_description = models.TextField()
+#     project_importance_level = models.CharField(choices=IMPORTANCE_LEVEL_CHOICES, max_length=15)
+#     project_importance_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
+#     project_urgency_level = models.CharField(choices=URGENCY_LEVEL_CHOICES, max_length=15)
+#     project_urgency_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
+#     project_deadline = models.DateField()
+#     project_start = models.DateField()
+#     project_end = models.DateField()
+#     project_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
+
+
+# class SubTasksModel(models.Model):
+#     """Database model for sub-tasks"""
+#     IMPORTANCE_LEVEL_CHOICES = [
+#         ("high", "High"),
+#         ("intermediate", "Intermediate"),
+#         ("low", "Low"),
+#     ]
+
+#     URGENCY_LEVEL_CHOICES = [
+#         ("high", "High"),
+#         ("intermediate", "Intermediate"),
+#         ("low", "Low"),
+#     ]
+
+#     STATUS_CHOICES = [
+#         ("to-do", "To-do"),
+#         ("doing", "Doing"),
+#         ("done", "Done"),
+#     ]
+
+#     subtask_id = models.AutoField(primary_key=True)
+#     subtask_title = models.CharField(max_length=255)
+#     subtask_description = models.TextField()
+#     subtask_importance_level = models.CharField(choices=IMPORTANCE_LEVEL_CHOICES, max_length=15)
+#     subtask_importance_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
+#     subtask_urgency_level = models.CharField(choices=URGENCY_LEVEL_CHOICES, max_length=15)
+#     subtask_urgency_magnitude = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(15)])
+#     subtask_deadline = models.DateTimeField()
+#     subtask_start = models.DateTimeField()
+#     subtask_end = models.DateTimeField()
+#     subtask_status = models.CharField(choices=STATUS_CHOICES, max_length=10)
+#     # Missing task_tags (under review for normalisation of DB)
+
+# # Junction models (they turn what would be many-to-many relationships to 2 x one-to-many relationships)
+# class UsersLifestages(models.Model):
+#     """Junction model between users and lifestages"""
+#     user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_lifestages")
+#     lifestage = models.ForeignKey(LifestagesModel, on_delete=models.PROTECT, related_name="lifestage_users")
+
+# class ResourcesUsers(models.Model):
+#     """Junction model between users and resources"""
+#     resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_users")
+#     user = models.ForeignKey(UsersModel, on_delete=models.CASCADE, related_name="user_resources")
+
+#     def __str__(self):
+#         return f"Resource: {self.resource}, user: {self.user}"
+
+# class ResourcesMilestones(models.Model):
+#     """Junction model between resources and milestones"""
+#     resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_milestones")
+#     milestone = models.ForeignKey(MilestonesModel, on_delete=models.PROTECT, related_name="milestone_resources")
+
+# class ResourcesTasks(models.Model):
+#     """Junction model between resources and tasks"""
+#     resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_tasks")
+#     task = models.ForeignKey(TasksModel, on_delete=models.PROTECT, related_name="task_resources")
+
+# class ResourcesAreas(models.Model):
+#     """Junction model between resources and areas"""
+#     resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_areas")
+#     area = models.ForeignKey(AreasModel, on_delete=models.PROTECT, related_name="area_resources")
+
+# class ResourcesLifestages(models.Model):
+#     """Junction model between resources and lifestages"""
+#     resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_lifestages")
+#     lifestage = models.ForeignKey(LifestagesModel, on_delete=models.PROTECT, related_name="lifestage_resources")
+
+# class ResourcesProjects(models.Model):
+#     """Junction model between resources and projects"""
+#     resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_projects")
+#     project = models.ForeignKey(ProjectsModel, on_delete=models.PROTECT, related_name="project_resources")
+
+# class ResourcesSubTasks(models.Model):
+#     """Junction model between resources and subtasks"""
+#     resource = models.ForeignKey(ResourcesModel, on_delete=models.PROTECT, related_name="resource_subtasks")
+#     subtask = models.ForeignKey(SubTasksModel, on_delete=models.PROTECT, related_name="subtask_resources")
+
+# class MilestonesLifestages(models.Model):
+#     """Junction model between milestones and lifestages"""
+#     milestone = models.ForeignKey(MilestonesModel, on_delete=models.PROTECT, related_name="milestone_lifestages")
+#     lifestage = models.ForeignKey(LifestagesModel, on_delete=models.CASCADE, related_name="lifestage_milestones")
+
+# class MilestonesProjects(models.Model):
+#     """Junction model between milestones and projects"""
+#     milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_projects")
+#     project = models.ForeignKey(ProjectsModel, on_delete=models.PROTECT, related_name="project_milestones")
+
+# class MilestonesTasks(models.Model):
+#     """Junction model between milestones and tasks"""
+#     milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_tasks")
+#     task = models.ForeignKey(TasksModel, on_delete=models.PROTECT, related_name="task_milestones")
+
+# class MilestonesSubtasks(models.Model):
+#     """Junction model between milestones and subtasks"""
+#     milestone = models.ForeignKey(MilestonesModel, on_delete=models.CASCADE, related_name="milestone_subtasks")
+#     subtask = models.ForeignKey(SubTasksModel, on_delete=models.PROTECT, related_name="subtask_milestones")
+
+# class LifestagesAreas(models.Model):
+#     """Junction model between lifestages and areas"""
+#     lifestage = models.ForeignKey(LifestagesModel, on_delete=models.CASCADE, related_name="lifestage_areas")
+#     area = models.ForeignKey(AreasModel, on_delete=models.PROTECT, related_name="area_lifestages")
