@@ -27,50 +27,5 @@ You can test through (if using django):
 or
 * python manage.py test app_name.tests.test_name.class_name.test_function_name
 
-Knowledge gaps:
-* Tuples
-* Lists
-* Dictionaries
-* Iterating through tuples, lists and dictionaries
-* for loops
-* while loops
-* Testing validation of data being stored in a model
-* Different assertions that can be made
-* List comprehensions and filtering data
-* Data manipulation (string, integer etc... but mainly string)
-* Quering model and DB
-
-REST FRAMEWORK NOTES:
-* Creating a user model
-    * AbstractBaseUser and PermissionsMixin are what the user model is based on
-    * Create model field
-    * set is_active, is_staff and is_superuser
-    * Link to appropriate manager
-
-* Create manager for user model
-    * create_user function
-    * create_superuser function
-
-* Creating models
-    * Model Meta classes
-    * Constraints
-    * Validators
-
-* API endpoints
-    * Users/
-        * register/ (Create)
-        * <int:user_id>/ (Read, Update, Delete)
-        * login/
-            * Forgot-Password/
-    * Tasks/
-        * create-task/ (Create)
-        * <int:task_id>/ (Read)
-            * update/ (Update)
-            * delete/ (Delete)
-
-Documentations referenced:
-* https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html#signing-key
-* https://www.django-rest-framework.org/api-guide/authentication/
-
 Skill gaps:
 * Querying a DB

@@ -12,8 +12,8 @@ from core import serializers, models
 Core application APIs
 test@example.com
 {
-    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MDA1NzI0OCwiaWF0IjoxNzM5OTcwODQ4LCJqdGkiOiI3MzQ5YzMzODE3Njc0YzcyYTRlMTY3YjExNGNkZTBmMCIsInVzZXJfaWQiOjJ9.Q-yPFANXaiLQOR-IBTbeZ9xZqVQa5dgO4hA_X-SvByY",
-    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5OTc4MTI3LCJpYXQiOjE3Mzk5NzA4NDgsImp0aSI6IjZlYThlMmNkMDYwODQ1NjdhZmYwMWNjNjBjNTQ2Y2ViIiwidXNlcl9pZCI6Mn0.A7C1-N6AbjN7LZ50nf43lPEr4Hs8NHtRzjdMTyLrisQ"
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MDEyNjk0OSwiaWF0IjoxNzQwMDQwNTQ5LCJqdGkiOiI4ZDZhNTlhODhlOGU0MTBkODE4YmYzZTRkN2Y5YWQzNyIsInVzZXJfaWQiOjJ9.UbG8z14wUy9aPkVLSHrUqOVd6sRoFn3mqYKBmARjYSA",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwMDQyMzQ5LCJpYXQiOjE3NDAwNDA1NDksImp0aSI6IjQzNjAwMzZjOTE3MTQxNmFhMDFhZmFiOWZjZjI5MmEyIiwidXNlcl9pZCI6Mn0.-x20OpvzAGVRn85X4x1YC3rUi_J8qYwdYk4eX_QflKQ"
 }
 """
 # Dashboard API endpoints
@@ -142,38 +142,59 @@ class newTaskApi(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-# class taskDetailsApi(APIView):
-#     """Api to update a task for a specific user"""
-#     serializer_class = serializers.TasksSerializer
-#     permission_classes = [IsAuthenticated,]
-
-#     def get(self, request, task_id, format=None):
-#         """Handles GET request to the task details api endpoint"""
-#         user = request.user
-#         task = models.TasksModel.objects.filter(user=user, task_id=task_id)
-#         serialized_data = self.serializer_class(data=task)
-
-#         if serialized_data.is_valid():
-#             return Response(
-#                 {"Task details:":serialized_data.data},
-#                 status=status.HTTP_200_OK,
-#             )
-#         return Response(
-#             {"Task not retrieved successfully❌":serialized_data.errors},
-#             status=status.HTTP_400_BAD_REQUEST,
-#         )
-
 class taskDetailsApi(APIView):
     """API to get a specific task"""
     serializer_class = serializers.TasksSerializer
     permission_classes = [IsAuthenticated,]
 
     def get(self, request, task_id, format=None):
-        """Handles GET request to retrieve task details"""
+        """Handles GET requests made to the retrieve task details endpoint"""
         user = request.user
         try:
             task = models.TasksModel.objects.get(user=user, task_id=task_id)
             serialized_data = self.serializer_class(task)
             return Response({"Task details": serialized_data.data}, status=status.HTTP_200_OK)
         except models.TasksModel.DoesNotExist:
-            return Response({"error": "Task not found❌"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"Task not found❌": serialized_data.errors}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, task_id, format=None):
+        """Handles PUT requests made to the retrieve task details endpoint"""
+        user = request.user
+        task = models.TasksModel.objects.get(user=user, task_id=task_id)
+        serialized_data = self.serializer_class(task, data=request.data)
+
+        if serialized_data.is_valid():
+            serialized_data.save()
+            return Response(
+                {
+                    "Task updated successfully✅":serialized_data.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {
+                "Task not updated successfully❌":serialized_data.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def patch(self, request, task_id, format=None):
+        """Handles PATCH requests made to the retrieve task details endpoint"""
+        user = request.user
+        task = models.TasksModel.objects.get(user=user, task_id=task_id)
+        serialized_data = self.serializer_class(task, data=request.data, partial=True)
+
+        if serialized_data.is_valid():
+            serialized_data.save()
+            return Response(
+                {
+                    "Task partially updated successfully✅":serialized_data.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {
+                "Task has not been partially updated sucessfully":serialized_data.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
