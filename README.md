@@ -27,5 +27,23 @@ You can test through (if using django):
 or
 * python manage.py test app_name.tests.test_name.class_name.test_function_name
 
+API ENDPOINTS:
+api/
+* dashboard/
+* user/
+    * registration/
+    * token/
+        * refresh/
+* stories/
+    * <int:story_id>/
+        * incident/
+        * people/
+        * VAKS/
+        * points/
+        * script/
+        * links/
+        * media/
+        * characters/
+
 Skill gaps:
 * Querying a DB

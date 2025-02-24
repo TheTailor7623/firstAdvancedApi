@@ -12,8 +12,5 @@ urlpatterns = [
     # Authentication endpoints
     path("user/token/", TokenObtainPairView.as_view(), name="token-obtain-pair-endpoint"),
     path("user/token/refresh", TokenRefreshView.as_view(), name="token-refresh-endpoint"),
-    # Tasks endpoints
-    path("user/tasks", views.tasksApi.as_view(), name="tasks-enpoint"),
-    path("user/task/new-task", views.newTaskApi.as_view(), name="new-task-endpoint"),
-    path("user/task/<int:task_id>", views.taskDetailsApi.as_view(), name="task-details-endpoint"),
+    # Story endpoints
 ]
