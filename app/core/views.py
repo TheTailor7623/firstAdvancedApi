@@ -17,7 +17,8 @@ class dashboardApi(APIView):
     def get(self, request, format=None):
         """Handles GET requests made to the dashboard API endpoint"""
         apiEndpointList = {
-            "Dashboard":"http://127.0.0.1:8000/api/dashboard",
+            "Admin":"http://127.0.0.1:8000/admin/",
+            "Dashboard":"http://127.0.0.1:8000/api/",
             "User registration":"http://127.0.0.1:8000/api/user/registration",
             "Token/Login":"http://127.0.0.1:8000/api/user/token",
             "Token refresh/re-login":"http://127.0.0.1:8000/api/user/token/refresh",
@@ -91,3 +92,5 @@ class userProfileApi(APIView):
             {"User profile partial update unsuccessful❌":serialized_data.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+# Stories API endpoints

@@ -29,21 +29,22 @@ or
 
 API ENDPOINTS:
 api/
-* dashboard/
+* dashboard/ (GET)
 * user/
-    * registration/
-    * token/
-        * refresh/
-* stories/
-    * <int:story_id>/
-        * incident/
-        * people/
-        * VAKS/
-        * points/
-        * script/
-        * links/
-        * media/
-        * characters/
+    * registration/ (POST)
+    * token/ (GET, POST)
+        * refresh/ (GET, POST)
+* stories/ (GET)
+    * <int:story_id>/ (GET, PUT, PATCH, DELETE)
+        * incident/ (GET, POST, PUT, PATCH, DELETE)
+        * people/ (GET, POST, PUT, PATCH, DELETE)
+        * VAKS/ (GET, POST, PUT, PATCH, DELETE)
+        * points/ (GET, POST, PUT, PATCH, DELETE)
+        * script/ (GET, POST, PUT, PATCH, DELETE)
+        * links/ (GET, POST, PUT, PATCH, DELETE)
+        * media/ (GET, POST, PUT, PATCH, DELETE)
+        * characters/ (GET, POST, PUT, PATCH, DELETE)
 
 Skill gaps:
 * Querying a DB
+* Manipulating dictionaries
