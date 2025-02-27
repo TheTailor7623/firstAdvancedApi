@@ -13,4 +13,8 @@ urlpatterns = [
     path("user/token/", TokenObtainPairView.as_view(), name="token-obtain-pair-endpoint"),
     path("user/token/refresh", TokenRefreshView.as_view(), name="token-refresh-endpoint"),
     # Story endpoints
+    path("stories/", views.storiesApi.as_view(), name="stories"),
+    path("stories/create-new-story", views.storyCreateApi.as_view(), name="create-story"),
+    path("stories/<int:story_id>", views.storyDetailsApi.as_view(), name="story-details"),
+    path("stories/<int:story_id>/incident", views.storyIncidentApi.as_view(), name="story-incident"),
 ]

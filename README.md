@@ -35,15 +35,41 @@ api/
     * token/ (GET, POST)
         * refresh/ (GET, POST)
 * stories/ (GET)
+    * create-new-story/ (POST)
     * <int:story_id>/ (GET, PUT, PATCH, DELETE)
-        * incident/ (GET, POST, PUT, PATCH, DELETE)
-        * people/ (GET, POST, PUT, PATCH, DELETE)
-        * VAKS/ (GET, POST, PUT, PATCH, DELETE)
-        * points/ (GET, POST, PUT, PATCH, DELETE)
-        * script/ (GET, POST, PUT, PATCH, DELETE)
-        * links/ (GET, POST, PUT, PATCH, DELETE)
-        * media/ (GET, POST, PUT, PATCH, DELETE)
-        * characters/ (GET, POST, PUT, PATCH, DELETE)
+        * incident/ (GET)
+            * create-new-incident/ (POST)
+            * <int:incident_id>/ (PUT, PATCH, DELETE)
+        * people/ (GET)
+            * create-new-people/ (POST)
+            * <int:people_id>/ (PUT, PATCH, DELETE)
+        * VAKS/ (GET)
+            * create-new-VAKS/ (POST)
+            * <int:VAKS_id>/ (PUT, PATCH, DELETE)
+        * points/ (GET)
+            * create-new-points/ (POST)
+            * <int:points_id>/ (PUT, PATCH, DELETE)
+        * script/ (GET)
+            * create-new-script/ (POST)
+            * <int:script_id>/ (PUT, PATCH, DELETE)
+        * links/ (GET)
+            * create-new-links/ (POST)
+            * <int:links_id>/ (PUT, PATCH, DELETE)
+        * media/ (GET)
+            * create-new-media/ (POST)
+            * <int:media_id>/ (PUT, PATCH, DELETE)
+        * characters/ (GET)
+            * create-new-characters/ (POST)
+            * <int:characters_id>/ (PUT, PATCH, DELETE)
+
+
+User stories:
+* Users should be able to create stories
+* Users should be able to edit stories
+* Users should be able to search for stories
+* Users should be able to delete stories
+* Users should be able to schedule time on a calendar and track how much time was spent each day working on a story
+* Users should be able to filter and sort for stories
 
 Skill gaps:
 * Querying a DB

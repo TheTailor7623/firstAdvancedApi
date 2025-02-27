@@ -97,7 +97,8 @@ class StorySerializer(serializers.Serializer):
 
     def create(self, validated_data):
         """Function to create an object within the model"""
-        return models.StoriesModel.objects.create(**validated_data)
+        user=self.context["user"]
+        return models.StoriesModel.objects.create(user=user, **validated_data)
 
     def update(self, instance, validated_data):
         """Function to update an object within the model"""
@@ -115,19 +116,22 @@ class IncidentsSerializer(serializers.Serializer):
     incident_when = serializers.DateTimeField()
 
     def create(self, validated_data):
-        """Function to create an object within the model"""
-        return models.IncidentsModel.objects.create(**validated_data)
+        """Create an incident and assign it to the correct story"""
+        story = self.context.get("story")
+
+        if not story:
+            raise serializers.ValidationError({"story": "Story must be provided ❌"})
+
+        return models.IncidentsModel.objects.create(story=story, **validated_data)
 
     def update(self, instance, validated_data):
         """Function to update an object within the model"""
         instance.incident_what = validated_data.get("incident_what", instance.incident_what)
         instance.incident_where = validated_data.get("incident_where", instance.incident_where)
         instance.incident_when = validated_data.get("incident_when", instance.incident_when)
-
-        instance.save()
         return instance
 
-class PeoplesSerializer(serializers.Serializer):
+class PeopleSerializer(serializers.Serializer):
     """Serializer for peoples model"""
     person_id = serializers.IntegerField(read_only=True)
     first_name = serializers.CharField(max_length=255)
