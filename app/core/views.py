@@ -21,15 +21,16 @@ class dashboardApi(APIView):
     def get(self, request, format=None):
         """Handles GET requests made to the dashboard API endpoint"""
         apiEndpointList = {
-            "Admin":"http://127.0.0.1:8000/admin/",
-            "Dashboard":"http://127.0.0.1:8000/api/",
+            "Admin":"http://127.0.0.1:8000/admin",
+            "Dashboard":"http://127.0.0.1:8000/api",
             "User registration":"http://127.0.0.1:8000/api/user/registration",
             "Token/Login":"http://127.0.0.1:8000/api/user/token",
             "Token refresh/re-login":"http://127.0.0.1:8000/api/user/token/refresh",
             "Stories":"http://127.0.0.1:8000/api/stories",
             "Create story":"http://127.0.0.1:8000/api/stories/create-new-story",
             "View specific story":"http://127.0.0.1:8000/api/stories/story_id",
-            "View specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident",
+            "View and modify a specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident",
+            "Create specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident/create-new-incident",
         }
 
         return Response(
@@ -198,13 +199,13 @@ class storyDetailsApi(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-class storyIncidentApi(APIView):
+class storyIncidentViewAndModifyApi(APIView):
     """API endpoint for incidents of a story"""
     serializer_class = serializers.IncidentsSerializer
     permission_classes = [IsAuthenticated]
 
     def get(self, request, story_id, format=None):
-        """Retrieve all incidents for a given story"""
+        """Method to handle GET requests to this API endpoint - retrieve a story's incident"""
         user = request.user
 
         try:
@@ -215,7 +216,13 @@ class storyIncidentApi(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        user_incident_queryset = models.IncidentsModel.objects.get(story=story)
+        try:
+            user_incident_queryset = models.IncidentsModel.objects.get(story=story)
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors": "Incident not found❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serialized_queryset = self.serializer_class(user_incident_queryset)
 
@@ -226,8 +233,67 @@ class storyIncidentApi(APIView):
             status=status.HTTP_200_OK,
         )
 
+    def put(self, request, story_id, format=None):
+        """Handle PUT requests for completely updating a story's incident"""
+        user = request.user
+
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Errors": "We could not find this story or you do not have access to it ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            incident = models.IncidentsModel.objects.get(story=story)
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors": "Incident not found for this story ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serialized_user_input = self.serializer_class(incident, data=request.data, context={"story": story})
+
+        if serialized_user_input.is_valid():
+            serialized_user_input.save()
+            return Response(
+                {"Incident saved successfully ✅": serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {"Incident failed to save ❌": serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+class storyIncidentCreateApi(APIView):
+    """API endpoint to create an incident for a story"""
+    serializer_class = serializers.IncidentsSerializer
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, format=None):
+        """Method to handle GET requests to this API endpoint - display story for reference to user creating the story incident"""
+        user = request.user
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {
+                    "Failed to retrieve story❌":"Story does not exist or you do not have permission to view it",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serialized_story = serializers.StorySerializer(story)
+        return Response(
+            {
+                "Story retrieved✅:":serialized_story.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
     def post(self, request, story_id, format=None):
-        """Create a new incident for a given story"""
+        """Method to handle POST requests to this API endpoint - Create a story's incident"""
         user = request.user
 
         try:
@@ -237,22 +303,18 @@ class storyIncidentApi(APIView):
                 {"Errors": "Story not found or does not belong to you ❌"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        serialized_user_incident_data = self.serializer_class(data=request.data)
-
-        if serialized_user_incident_data.is_valid():
-            serialized_user_incident_data.save(story=story)
+        serialized_user_input = self.serializer_class(data=request.data, context={"story": story})
+        if serialized_user_input.is_valid():
+            serialized_user_input.save()
             return Response(
                 {
-                    "Incident saved successfully ✅": serialized_user_incident_data.data,
+                    "Story incident saved successfully✅":serialized_user_input.data,
                 },
                 status=status.HTTP_201_CREATED,
             )
-
         return Response(
             {
-                "Story incident failed to save ❌": serialized_user_incident_data.errors,
+                "Story incident creation failed❌":serialized_user_input.errors,
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-

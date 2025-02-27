@@ -74,3 +74,5 @@ User stories:
 Skill gaps:
 * Querying a DB
 * Manipulating dictionaries
+* Manipulating API requests
+* Constructing API request methods

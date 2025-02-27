@@ -129,6 +129,7 @@ class IncidentsSerializer(serializers.Serializer):
         instance.incident_what = validated_data.get("incident_what", instance.incident_what)
         instance.incident_where = validated_data.get("incident_where", instance.incident_where)
         instance.incident_when = validated_data.get("incident_when", instance.incident_when)
+        instance.save()
         return instance
 
 class PeopleSerializer(serializers.Serializer):
