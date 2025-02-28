@@ -11,8 +11,8 @@ from core import serializers, models
 """
 Core application APIs
 {
-    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MDc0MDY1MiwiaWF0IjoxNzQwNjU0MjUyLCJqdGkiOiI0NDU1Mzk4ODE0MGI0YmQzYjk5MDljOWYxOGYxYzFjMSIsInVzZXJfaWQiOjJ9.XfRRMqgn2AFALHphptVwhUaQBGfXCYy33OTLwpIIWnM",
-    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwNjU2MDUyLCJpYXQiOjE3NDA2NTQyNTIsImp0aSI6Ijk4MDRjMjNiMzBmNTRlMGJiNGNlYWUxYzgyMWVmOTZkIiwidXNlcl9pZCI6Mn0.Z3FzeLypbCzZEE7ArEOeQXTKK_-FzSr79Ud41njjOa0"
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MDgyNzY2MCwiaWF0IjoxNzQwNzQxMjYwLCJqdGkiOiI0N2MyNWFkMmE0Y2I0NGUxOWQ0ZGI0ZGM2OGUxNmMxOCIsInVzZXJfaWQiOjJ9.yfEpfZE1jys71Xes1jAUcfA-0X6NRHEzcX5PHG04Eug",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwNzQ0ODYwLCJpYXQiOjE3NDA3NDEyNjAsImp0aSI6IjlmMDFjNDdjZGIwMjQ2MTBiOWRjYTdiYzU4YzQ1YjMwIiwidXNlcl9pZCI6Mn0.-A003fLxLfOdzwqLsq-jYaOluTVRSnsX0rOSR588ymk"
 }
 """
 # Dashboard API endpoints
@@ -29,8 +29,7 @@ class dashboardApi(APIView):
             "Stories":"http://127.0.0.1:8000/api/stories",
             "Create story":"http://127.0.0.1:8000/api/stories/create-new-story",
             "View specific story":"http://127.0.0.1:8000/api/stories/story_id",
-            "View and modify a specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident",
-            "Create specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident/create-new-incident",
+            "View, create and modify a specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident",
         }
 
         return Response(
@@ -199,7 +198,7 @@ class storyDetailsApi(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-class storyIncidentViewAndModifyApi(APIView):
+class storyIncidentApi(APIView):
     """API endpoint for incidents of a story"""
     serializer_class = serializers.IncidentsSerializer
     permission_classes = [IsAuthenticated]
@@ -210,28 +209,64 @@ class storyIncidentViewAndModifyApi(APIView):
 
         try:
             story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+            incident = models.IncidentsModel.objects.get(story=story)
         except models.StoriesModel.DoesNotExist:
             return Response(
-                {"Errors": "Story not found or does not belong to you ❌"},
+                {"Errors": "Story not found or does not belong to you❌"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        try:
-            user_incident_queryset = models.IncidentsModel.objects.get(story=story)
         except models.IncidentsModel.DoesNotExist:
             return Response(
-                {"Errors": "Incident not found❌"},
+                {"Errors": "Incident not found or does not belong to you❌"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serialized_queryset = self.serializer_class(user_incident_queryset)
-
+        serialized_incident = self.serializer_class(incident)
         return Response(
             {
-                "Here is your incident for this story": serialized_queryset.data,
+                "Here is your incident for this story": serialized_incident.data,
             },
             status=status.HTTP_200_OK,
         )
+
+    def post(self, request, story_id, format=None):
+        """Method to handle POST request to create an incident for a story"""
+
+        user = request.user
+
+        # Check if the story exists and belongs to the user
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Error": "Story not found or does not belong to you ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if the story already has an incident
+        if models.IncidentsModel.objects.filter(story=story).exists():
+            return Response(
+                {"Error": "Story already has an incident ❌"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Serialize user input
+        serialized_user_incident_input = self.serializer_class(data=request.data, context={"story": story})
+
+        # Validate input
+        if serialized_user_incident_input.is_valid():
+            serialized_user_incident_input.save()
+            return Response(
+                {"Success": "Incident created successfully ✅", "Incident": serialized_user_incident_input.data},
+                status=status.HTTP_201_CREATED,
+            )
+
+        # Return errors if validation fails
+        return Response(
+            {"Error": "Incident creation failed ❌", "Details": serialized_user_incident_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
 
     def put(self, request, story_id, format=None):
         """Handle PUT requests for completely updating a story's incident"""
@@ -267,54 +302,63 @@ class storyIncidentViewAndModifyApi(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-class storyIncidentCreateApi(APIView):
-    """API endpoint to create an incident for a story"""
-    serializer_class = serializers.IncidentsSerializer
-    permission_classes = [IsAuthenticated,]
-
-    def get(self, request, story_id, format=None):
-        """Method to handle GET requests to this API endpoint - display story for reference to user creating the story incident"""
+    def patch(self, request, story_id, format=None):
+        """Handle PATCH requests to partially update a story's incident"""
+        # Check if the story belongs to the user
         user = request.user
+
         try:
             story = models.StoriesModel.objects.get(user=user, story_id=story_id)
         except models.StoriesModel.DoesNotExist:
             return Response(
                 {
-                    "Failed to retrieve story❌":"Story does not exist or you do not have permission to view it",
+                    "Errors":"story not found or you are not authorized to view it",
                 },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        serialized_story = serializers.StorySerializer(story)
-        return Response(
-            {
-                "Story retrieved✅:":serialized_story.data,
-            },
-            status=status.HTTP_200_OK,
-        )
-
-    def post(self, request, story_id, format=None):
-        """Method to handle POST requests to this API endpoint - Create a story's incident"""
-        user = request.user
-
-        try:
-            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
-        except models.StoriesModel.DoesNotExist:
-            return Response(
-                {"Errors": "Story not found or does not belong to you ❌"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        serialized_user_input = self.serializer_class(data=request.data, context={"story": story})
+        # Find corresponding incident
+        incident = models.IncidentsModel.objects.get(story=story)
+
+        # Handle PATCH
+        serialized_user_input = self.serializer_class(incident, data=request.data, context={"story":story}, partial=True)
+
         if serialized_user_input.is_valid():
             serialized_user_input.save()
             return Response(
-                {
-                    "Story incident saved successfully✅":serialized_user_input.data,
-                },
-                status=status.HTTP_201_CREATED,
+                {"Incident partially updated successfully✅":serialized_user_input.data},
+                status=status.HTTP_200_OK,
             )
         return Response(
-            {
-                "Story incident creation failed❌":serialized_user_input.errors,
-            },
+            {"Incident partial update failed❌"},
             status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def delete(self, request, story_id, format=None):
+        """Method to handle DELETE requests to delete an incident of a story"""
+        user = request.user
+
+        try:
+            # Fetch the story for the logged-in user
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+
+            # Try to get the incident associated with the story
+            incident = models.IncidentsModel.objects.get(story=story)
+
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Errors": "Story not found or you do not have access to it ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors": "Incident not found for this story ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # If incident is found, delete it
+        incident.delete()
+
+        return Response(
+            {"Message": "Incident deleted successfully ✅"},
+            status=status.HTTP_204_NO_CONTENT
         )

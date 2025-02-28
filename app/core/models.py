@@ -94,11 +94,13 @@ class StoriesModel(models.Model):
 
 class IncidentsModel(models.Model):
     """Database incident model for story incidents in the system"""
-    story = models.ForeignKey(StoriesModel, on_delete=models.CASCADE)
-    incident_id = models.AutoField(primary_key=True)
+    story = models.OneToOneField(StoriesModel, on_delete=models.CASCADE, primary_key=True)
     incident_what = models.TextField()
     incident_where = models.CharField(max_length=255)
     incident_when = models.DateTimeField()
+
+    def __str__(self):
+        return f"Incident for {self.story.title} - {self.incident_where}"
 
 class PeoplesModel(models.Model):
     """Database people model for people within the incidents for stories (the WHO)"""
@@ -157,6 +159,9 @@ class PeopleIncidentModel(models.Model):
     """Database people and incident junction model"""
     person = models.ForeignKey(PeoplesModel, on_delete=models.CASCADE)
     incident = models.ForeignKey(IncidentsModel, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("person", "incident")
 
 class StoryLinkModel(models.Model):
     """Database story and link junction model"""

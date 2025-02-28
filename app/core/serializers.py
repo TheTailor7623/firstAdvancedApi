@@ -110,7 +110,6 @@ class StorySerializer(serializers.Serializer):
 class IncidentsSerializer(serializers.Serializer):
     """Serializer for incidents model"""
     story = serializers.PrimaryKeyRelatedField(read_only=True)
-    incident_id = serializers.IntegerField(read_only=True)
     incident_what = serializers.CharField()
     incident_where = serializers.CharField(max_length=255)
     incident_when = serializers.DateTimeField()
@@ -121,6 +120,10 @@ class IncidentsSerializer(serializers.Serializer):
 
         if not story:
             raise serializers.ValidationError({"story": "Story must be provided ❌"})
+
+        # Check if the story already has an incident
+        if models.IncidentsModel.objects.filter(story=story).exists():
+            raise serializers.ValidationError({"incident": "Each story can only have ONE incident ❌"})
 
         return models.IncidentsModel.objects.create(story=story, **validated_data)
 
