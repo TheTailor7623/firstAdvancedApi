@@ -18,8 +18,6 @@ urlpatterns = [
     path("stories/<int:story_id>/", views.storyDetailsApi.as_view(), name="story-details"),
     # Story incident endpoint
     path("stories/<int:story_id>/incident/", views.storyIncidentApi.as_view(), name="story-incident"),
-    # path("stories/<int:story_id>/create-new-incident/", views.storyIncidentCreateApi.as_view(), name="create-story-incident"),
-    # Story incident endpoints
-    # path("stories/<int:story_id>/people/", views.storyPeopleViewAndModifyApi.as_view(), name="story-people"),
-    # path("stories/<int:story_id>/create-new-people/", views.storyPeopleCreateApi.as_view(), name="create-story-people"),
+    # Story people endpoints
+    path("stories/<int:story_id>/people/", views.storyPeopleApi.as_view(), name="story-people"),
 ]

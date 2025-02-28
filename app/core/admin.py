@@ -5,3 +5,5 @@ from core import models
 admin.site.register(models.UsersModel)
 admin.site.register(models.StoriesModel)
 admin.site.register(models.IncidentsModel)
+admin.site.register(models.PeoplesModel)
+admin.site.register(models.PeopleIncidentModel)

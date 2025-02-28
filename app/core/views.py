@@ -30,6 +30,7 @@ class dashboardApi(APIView):
             "Create story":"http://127.0.0.1:8000/api/stories/create-new-story",
             "View specific story":"http://127.0.0.1:8000/api/stories/story_id",
             "View, create and modify a specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident",
+            "View, create and modify a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people",
         }
 
         return Response(
@@ -361,4 +362,42 @@ class storyIncidentApi(APIView):
         return Response(
             {"Message": "Incident deleted successfully ✅"},
             status=status.HTTP_204_NO_CONTENT
+        )
+
+class storyPeopleApi(APIView):
+    """API View to manage requests made to the people endpoint"""
+    people_serializer_class = serializers.PeopleSerializer
+    # people_incident_serializer_class = serializers.PeopleIncidentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, story_id, format=None):
+        """Handles GET requests made to the people endpoint"""
+        # Ensure the user has access to the story
+        user = request.user
+
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Errors": "Story not found or you do not have access to this story ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Ensure story has an incident
+        try:
+            incident = models.IncidentsModel.objects.get(story=story)
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors": "Incident not found for this story ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Go through look up table and find list of people for incident
+        people_incidents = models.PeopleIncidentModel.objects.filter(incident=incident)
+        people = [people_incident_record.person for people_incident_record in people_incidents]  # Extract PeopleModel instances
+
+        # Serialize list of people
+        serialized_people = self.people_serializer_class(people, many=True)
+
+        return Response(
+            {"People involved in this incident (the WHO)": serialized_people.data},
+            status=status.HTTP_200_OK,
         )

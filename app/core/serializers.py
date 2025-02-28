@@ -119,7 +119,7 @@ class IncidentsSerializer(serializers.Serializer):
         story = self.context.get("story")
 
         if not story:
-            raise serializers.ValidationError({"story": "Story must be provided ❌"})
+            raise serializers.ValidationError({"story": "Story must be provided to save incident to❌"})
 
         # Check if the story already has an incident
         if models.IncidentsModel.objects.filter(story=story).exists():
