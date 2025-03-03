@@ -11,8 +11,8 @@ from core import serializers, models
 """
 Core application APIs
 {
-    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MDgyNzY2MCwiaWF0IjoxNzQwNzQxMjYwLCJqdGkiOiI0N2MyNWFkMmE0Y2I0NGUxOWQ0ZGI0ZGM2OGUxNmMxOCIsInVzZXJfaWQiOjJ9.yfEpfZE1jys71Xes1jAUcfA-0X6NRHEzcX5PHG04Eug",
-    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwNzQ0ODYwLCJpYXQiOjE3NDA3NDEyNjAsImp0aSI6IjlmMDFjNDdjZGIwMjQ2MTBiOWRjYTdiYzU4YzQ1YjMwIiwidXNlcl9pZCI6Mn0.-A003fLxLfOdzwqLsq-jYaOluTVRSnsX0rOSR588ymk"
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTA4MDUxOSwiaWF0IjoxNzQwOTk0MTE5LCJqdGkiOiI5NmNkMjUwY2UzOGE0ZDVkYWYzN2JjNmVmNjIwMDI5MCIsInVzZXJfaWQiOjJ9.6xs6VJ7Lf79sof3EPdAXc8X0zmxTVaT-2AsPmainbBg",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwOTk3NzE5LCJpYXQiOjE3NDA5OTQxMTksImp0aSI6IjYzMDhlN2JjNmY2MTQ4YmE5MDc2ZTc5ZDQ2MjQzMWI3IiwidXNlcl9pZCI6Mn0.aZWgdJhEB-vCFZljiKEtzh0B2zAqPBqwQ5O9u4kki5A"
 }
 """
 # Dashboard API endpoints
@@ -367,7 +367,7 @@ class storyIncidentApi(APIView):
 class storyPeopleApi(APIView):
     """API View to manage requests made to the people endpoint"""
     people_serializer_class = serializers.PeopleSerializer
-    # people_incident_serializer_class = serializers.PeopleIncidentSerializer
+    people_incident_serializer_class = serializers.PeopleIncidentSerializer
     permission_classes = [IsAuthenticated]
 
     def get(self, request, story_id, format=None):
@@ -401,3 +401,73 @@ class storyPeopleApi(APIView):
             {"People involved in this incident (the WHO)": serialized_people.data},
             status=status.HTTP_200_OK,
         )
+
+    def post(self, request, story_id, format=None):
+        """Handles POST requests made to the people endpoint"""
+        # Check user is owner of story
+        user = request.user
+
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Errors:":"Story not found or does not belong to you❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check story has an incident
+        try:
+            incident = models.IncidentsModel.objects.get(story=story)
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors:":"Incident not found or story does not have one❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize model to accept HTML form and raw data POST requests
+        serialized_people_model = self.people_serializer_class(data=request.data)
+
+        # Validate data
+        if serialized_people_model.is_valid():
+            # Create or get the person
+            person, created = models.PeoplesModel.objects.get_or_create(
+                **serialized_people_model.validated_data
+            )
+
+            # Create the link in the junction table (if not already linked)
+            people_incident, link_created = models.PeopleIncidentModel.objects.get_or_create(
+                person=person,
+                incident=incident,
+            )
+
+            # Return success message
+            return Response(
+                {
+                    "Success✅": "Person successfully added to the incident" if link_created else "Person was already linked to the incident",
+                    "Person data":self.people_serializer_class(person).data
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        # Return error message
+        return Response(
+            {"Errors❌:":serialized_people_model.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+"""
+NOTES TO SELF:
+
+Standard Practice:
+Re-serializing the saved object is standard practice in DRF.
+It ensures the response reflects the actual state of the object as stored in the database, including any modifications or auto-populated values.
+
+# Return success message
+return Response(
+    {
+        "Success✅": "Person successfully added to the incident" if link_created else "Person was already linked to the incident",
+        "Person data":self.people_serializer_class(person).data
+    },
+    status=status.HTTP_201_CREATED,
+)
+"""

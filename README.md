@@ -62,3 +62,5 @@ Skill gaps:
 * Manipulating dictionaries
 * Manipulating API requests
 * Constructing API request methods
+* Tuple assignment
+* ORM retriving and inserting data
