@@ -21,17 +21,18 @@ class dashboardApi(APIView):
     def get(self, request, format=None):
         """Handles GET requests made to the dashboard API endpoint"""
         apiEndpointList = {
-            "Admin":"http://127.0.0.1:8000/admin",
-            "Dashboard":"http://127.0.0.1:8000/api",
-            "User registration":"http://127.0.0.1:8000/api/user/registration",
-            "Token/Login":"http://127.0.0.1:8000/api/user/token",
-            "Token refresh/re-login":"http://127.0.0.1:8000/api/user/token/refresh",
-            "Stories":"http://127.0.0.1:8000/api/stories",
-            "Create story":"http://127.0.0.1:8000/api/stories/create-new-story",
-            "View specific story":"http://127.0.0.1:8000/api/stories/story_id",
-            "View, create and modify a specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident",
-            "View, create a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people",
-            "Modify a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people/person_id",
+            "Admin":"http://127.0.0.1:8000/admin/",
+            "Dashboard":"http://127.0.0.1:8000/api/",
+            "User registration":"http://127.0.0.1:8000/api/user/registration/",
+            "Token/Login":"http://127.0.0.1:8000/api/user/token/",
+            "Token refresh/re-login":"http://127.0.0.1:8000/api/user/token/refresh/",
+            "Stories":"http://127.0.0.1:8000/api/stories/",
+            "Create story":"http://127.0.0.1:8000/api/stories/create-new-story/",
+            "View specific story":"http://127.0.0.1:8000/api/stories/story_id/",
+            "View, create and modify a specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident/",
+            "View, create a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people/",
+            "Modify a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people/person_id/",
+            "View, create or modify a specific VAKS for a story":"http://127.0.0.1:8000/api/stories/story_id/vaks/",
         }
 
         return Response(
@@ -679,8 +680,188 @@ class storyPeopleApiDetails(APIView):
 
         return Response(
             {"Success ✅": "Person has been removed from this incident"},
-            status=status.HTTP_204_NO_CONTENT,  # 204 is better for DELETE
+            status=status.HTTP_204_NO_CONTENT,
         )
+
+class vaksApi(APIView):
+    """API endpoint to manage requests made for CRUD operations of VAKS to a story"""
+    # Establish serializers
+    story_serializer_class = serializers.StorySerializer
+    vaks_serializer_class = serializers.VAKSSerializer
+
+    # Establish models
+    story_model_class = models.StoriesModel
+    vaks_model_class = models.VAKSModel
+
+    # Establish authentification and permission
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, format=None):
+        """Handles GET methods made to this endpoint to RETRIEVE vaks of a story"""
+        # Verify user owns story
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Error❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Identify VAKS of the story
+        try:
+            vaks = self.vaks_model_class.objects.get(story=story)
+        except self.vaks_model_class.DoesNotExist:
+            return Response(
+                {"Error❌":"VAKS not found for this story"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize the data retrieved
+        serialized_data = self.vaks_serializer_class(vaks)
+
+        # Return success message with data
+        return Response(
+            {"VAKS retrieved✅":serialized_data.data},
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request, story_id, format=None):
+        """Handles POST requests made to this endpoint to CREATE vaks of a story"""
+        # Validate that user owns story
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Error❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialise user input entered by user
+        serialized_user_input = self.vaks_serializer_class(data=request.data, context={"story":story})
+
+        # Validate data
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+            # Return success message
+            return Response(
+                {"VAKS has been saved successfully✅":serialized_user_input.data},
+                status=status.HTTP_201_CREATED,
+            )
+        # Return error message
+        return Response(
+            {"VAKS failed to save❌":serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def put(self, request, story_id, format=None):
+        """Handles PUT requests made to this endpoint to UPDATE vaks of a story"""
+        # Validate user owns story
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Error❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate story has vaks
+        try:
+            vaks = self.vaks_model_class.objects.get(story=story)
+        except self.vaks_model_class.DoesNotExist:
+            return Response(
+                {"Error❌":"VAKS not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize user input
+        serialized_user_input = self.vaks_serializer_class(vaks, data=request.data)
+
+        # Validate user input
+        if serialized_user_input.is_valid():
+            # Save user input
+            serialized_user_input.save()
+            # Return success message
+            return Response(
+                {"VAKS has been updated successfully✅":serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+        # Return error message
+        return Response(
+            {"Error❌": "VAKS update failed", "Details": serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def patch(self, request, story_id, format=None):
+        """Handles PATCH requests made to this endpoint to UPDATE vaks of a story"""
+        # Validate user owns story
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Error❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate story has vaks
+        try:
+            vaks = self.vaks_model_class.objects.get(story=story)
+        except self.vaks_model_class.DoesNotExist:
+            return Response(
+                {"Error❌":"VAKS not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize user input
+        serialized_user_input = self.vaks_serializer_class(vaks, data=request.data, partial=True)
+
+        # Validate user input
+        if serialized_user_input.is_valid():
+            # Save user input
+            serialized_user_input.save()
+            # Return success message
+            return Response(
+                {"VAKS has been partially updated successfully✅":serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+        # Return error message
+        return Response(
+            {"Error❌": "VAKS partial update failed", "Details": serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def delete(self, request, story_id, format=None):
+        """Handles DELETE requests to remove a story's VAKS"""
+        user = request.user
+
+        # Ensure the user owns the story
+        story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        if not story:
+            return Response(
+                {"Error❌": "Story not found or does not belong to you"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure the story has a VAKS
+        vaks = self.vaks_model_class.objects.get(story=story)
+        if not vaks:
+            return Response(
+                {"Error❌": "VAKS not found for this story"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Delete the VAKS entry
+        vaks.delete()
+
+        return Response(
+            {"Success ✅": "VAKS has been deleted"},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
 
 """
 NOTES TO SELF:

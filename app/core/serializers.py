@@ -158,7 +158,7 @@ class VAKSSerializer(serializers.Serializer):
     story = serializers.PrimaryKeyRelatedField(read_only=True)
     vaks_id = serializers.IntegerField(read_only=True)
     sight = serializers.CharField()
-    height = serializers.CharField()
+    sound = serializers.CharField()
     smell = serializers.CharField()
     taste = serializers.CharField()
     touch = serializers.CharField()
@@ -166,12 +166,20 @@ class VAKSSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         """Function to create an object within the model"""
-        return models.VAKSModel.objects.create(**validated_data)
+        story = self.context.get("story")
+
+        if not story:
+            raise serializers.ValidationError({"Story": "Story must be provided to save the VAKS to❌"})
+
+        if models.VAKSModel.objects.filter(story=story).exists():
+            raise serializers.ValidationError({"VAKS": "Each story can only have ONE vaks ❌"})
+
+        return models.VAKSModel.objects.create(story=story, **validated_data)
 
     def update(self, instance, validated_data):
         """Function to update an object within the model"""
         instance.sight = validated_data.get("sight", instance.sight)
-        instance.height = validated_data.get("height", instance.height)
+        instance.sound = validated_data.get("sound", instance.sound)
         instance.smell = validated_data.get("smell", instance.smell)
         instance.taste = validated_data.get("taste", instance.taste)
         instance.touch = validated_data.get("touch", instance.touch)

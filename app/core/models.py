@@ -116,7 +116,7 @@ class VAKSModel(models.Model):
     story = models.ForeignKey(StoriesModel, on_delete=models.CASCADE)
     vaks_id = models.AutoField(primary_key=True)
     sight = models.TextField()
-    height = models.TextField()
+    sound = models.TextField()
     smell = models.TextField()
     taste = models.TextField()
     touch = models.TextField()
