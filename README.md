@@ -38,16 +38,14 @@ api/
     * create-new-story/ (POST)
     * <int:story_id>/ (GET, PUT, PATCH, DELETE)
         * incident/ (GET, POST, PUT, PATCH, DELETE)
-        * people/ (GET, POST, PUT, PATCH, DELETE)
+        * people/ (GET, POST)
+            * <int:person_id> (GET, PUT, PATCH, DELETE)
         * VAKS/ (GET, POST, PUT, PATCH, DELETE)
         * points/ (GET, POST, PUT, PATCH, DELETE)
         * script/ (GET, POST, PUT, PATCH, DELETE)
         * links/ (GET, POST, PUT, PATCH, DELETE)
         * media/ (GET, POST, PUT, PATCH, DELETE)
-        * characters/ (GET)
-            * create-new-characters/ (POST)
-            * <int:characters_id>/ (PUT, PATCH, DELETE)
-
+        * characters/ (GET, POST, PUT, PATCH, DELETE)
 
 User stories:
 * Users should be able to create stories

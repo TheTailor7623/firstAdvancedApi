@@ -12,7 +12,7 @@ from core import serializers, models
 Core application APIs
 {
     "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTA4MDUxOSwiaWF0IjoxNzQwOTk0MTE5LCJqdGkiOiI5NmNkMjUwY2UzOGE0ZDVkYWYzN2JjNmVmNjIwMDI5MCIsInVzZXJfaWQiOjJ9.6xs6VJ7Lf79sof3EPdAXc8X0zmxTVaT-2AsPmainbBg",
-    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwOTk3NzE5LCJpYXQiOjE3NDA5OTQxMTksImp0aSI6IjYzMDhlN2JjNmY2MTQ4YmE5MDc2ZTc5ZDQ2MjQzMWI3IiwidXNlcl9pZCI6Mn0.aZWgdJhEB-vCFZljiKEtzh0B2zAqPBqwQ5O9u4kki5A"
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMDE1OTM1LCJpYXQiOjE3NDA5OTQxMTksImp0aSI6IjlmZmY5MzIyYTFmZDQ1MDFiYjEyZmMzNmU5M2Y5N2JmIiwidXNlcl9pZCI6Mn0.e_mqmXSQEwlJY5Xds0hBIXtUKg6hBwPrHelD_IlqGMs"
 }
 """
 # Dashboard API endpoints
@@ -30,7 +30,8 @@ class dashboardApi(APIView):
             "Create story":"http://127.0.0.1:8000/api/stories/create-new-story",
             "View specific story":"http://127.0.0.1:8000/api/stories/story_id",
             "View, create and modify a specific story incident":"http://127.0.0.1:8000/api/stories/story_id/incident",
-            "View, create and modify a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people",
+            "View, create a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people",
+            "Modify a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people/person_id",
         }
 
         return Response(
@@ -453,6 +454,232 @@ class storyPeopleApi(APIView):
         return Response(
             {"Errors❌:":serialized_people_model.errors},
             status=status.HTTP_400_BAD_REQUEST,
+        )
+
+class storyPeopleApiDetails(APIView):
+    """API View to manage requests made to the people endpoint for details"""
+    people_serializer_class = serializers.PeopleSerializer
+    people_incident_serializer_class = serializers.PeopleIncidentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, story_id, person_id, format=None):
+        """Handles GET requests made to the people endpoint"""
+        # Ensure the user has access to the story
+        user = request.user
+
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Errors": "Story not found or you do not have access to this story ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure story has an incident
+        try:
+            incident = models.IncidentsModel.objects.get(story=story)
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors": "Incident not found for this story ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check that the person exists
+        try:
+            person = models.PeoplesModel.objects.get(person_id=person_id)
+        except models.PeoplesModel.DoesNotExist:
+            return Response(
+                {"Errors❌":"Person was not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure the person belongs to this incident (check junction table)
+        try:
+            people_incident = models.PeopleIncidentModel.objects.get(person=person, incident=incident)
+        except models.PeopleIncidentModel.DoesNotExist:
+            return Response(
+                {"Errors❌": "This person is not linked to this incident"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize person
+        serialized_person = self.people_serializer_class(person)
+
+        return Response(
+            {"Person": serialized_person.data},
+            status=status.HTTP_200_OK,
+        )
+
+    def put(self, request, story_id, person_id, format=None):
+        """Handles PUT requests made to this API endpoint"""
+        # Check that story belongs to user
+        user = request.user
+
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story does not exist or you do not have access to it"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check that story has incident
+        try:
+            incident = models.IncidentsModel.objects.get(story=story)
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors❌":"Incident does not exist or your story does not have one"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check that the person exists
+        try:
+            person = models.PeoplesModel.objects.get(person_id=person_id)
+        except models.PeoplesModel.DoesNotExist:
+            return Response(
+                {"Errors❌":"Person was not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure the person belongs to this incident (check junction table)
+        try:
+            people_incident = models.PeopleIncidentModel.objects.get(person=person, incident=incident)
+        except models.PeopleIncidentModel.DoesNotExist:
+            return Response(
+                {"Errors❌": "This person is not linked to this incident"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize user input with person and user input
+        serialized_user_input = self.people_serializer_class(person, data=request.data)
+        # Validate data
+        if serialized_user_input.is_valid():
+            # Save data in person table
+            serialized_user_input.save()
+
+            # Return success message
+            return Response(
+                {
+                    "Success ✅": "Person information updated",
+                    "Person Data": serialized_user_input.data
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # Return error message
+        return Response(
+            {"Errors❌":serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def patch(self, request, story_id, person_id, format=None):
+        """Handles PATCH request made to this API endpoint"""
+        # Check user owns story
+        user = request.user
+
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found or does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check story has incident
+        try:
+            incident = models.IncidentsModel.objects.get(story=story)
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors❌":"Incident not found or story does not have one"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check incident has person
+        try:
+            person = models.PeoplesModel.objects.get(person_id=person_id)
+        except models.PeoplesModel.DoesNotExist:
+            return Response(
+                {"Errors❌":"person not found or does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure the person belongs to this incident (check junction table)
+        try:
+            people_incident = models.PeopleIncidentModel.objects.get(person=person, incident=incident)
+        except models.PeopleIncidentModel.DoesNotExist:
+            return Response(
+                {"Errors❌": "This person is not linked to this incident"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialise person with changes
+        serialized_user_input = self.people_serializer_class(person, data=request.data, partial=True)
+        # Validate data
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+
+            # Return success message
+            return Response(
+                {
+                    "Success ✅": "Person information partially updated",
+                    "Person Data": serialized_user_input.data
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # Return error message
+        return Response(
+            {"Errors ❌": "Information entered not valid"},
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, story_id, person_id, format=None):
+        """Handles DELETE request made to remove a person from an incident"""
+        user = request.user
+
+        # Ensure the user owns the story
+        try:
+            story = models.StoriesModel.objects.get(user=user, story_id=story_id)
+        except models.StoriesModel.DoesNotExist:
+            return Response(
+                {"Errors❌": "Story not found or does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure the story has an incident
+        try:
+            incident = models.IncidentsModel.objects.get(story=story)
+        except models.IncidentsModel.DoesNotExist:
+            return Response(
+                {"Errors❌": "Incident not found or the story does not have one"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure the person exists
+        try:
+            person = models.PeoplesModel.objects.get(person_id=person_id)
+        except models.PeoplesModel.DoesNotExist:
+            return Response(
+                {"Errors❌": "Person not found or does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure the person belongs to this incident (check junction table)
+        try:
+            people_incident = models.PeopleIncidentModel.objects.get(person=person, incident=incident)
+        except models.PeopleIncidentModel.DoesNotExist:
+            return Response(
+                {"Errors❌": "This person is not linked to this incident"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Delete the link between the person and the incident
+        people_incident.delete()
+
+        return Response(
+            {"Success ✅": "Person has been removed from this incident"},
+            status=status.HTTP_204_NO_CONTENT,  # 204 is better for DELETE
         )
 
 """
