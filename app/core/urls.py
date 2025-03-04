@@ -26,4 +26,6 @@ urlpatterns = [
     # Point endpoints
     path("stories/<int:story_id>/points/", views.pointsApi.as_view(), name="story-points"),
     path("stories/<int:story_id>/points/<int:point_id>", views.pointDetailsApi.as_view(), name="story-point-details"),
+    # Script endpoints
+    path("stories/<int:story_id>/script", views.scriptApi.as_view(), name="story-script"),
 ]

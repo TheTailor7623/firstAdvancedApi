@@ -35,6 +35,7 @@ class dashboardApi(APIView):
             "View, create or modify a specific VAKS for a story":"http://127.0.0.1:8000/api/stories/story_id/vaks/",
             "View or create a point for a story":"http://127.0.0.1:8000/api/stories/story_id/points/",
             "View update or delete a specific point for a story":"http://127.0.0.1:8000/api/stories/story_id/points/point_id",
+            "Create retrieve update or delete a script for a story":"http://127.0.0.1:8000/api/stories/story_id/script",
         }
 
         return Response(
@@ -1073,6 +1074,174 @@ class pointDetailsApi(APIView):
         # Return success message
         return Response(
             {"Success ✅": "Point has been deleted"},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+class scriptApi(APIView):
+    """API endpoint to manage requests made for CRUD operations to the script of a story"""
+    # Establish serializers
+    story_serializer_class = serializers.StorySerializer
+    script_serializer_class = serializers.ScriptsSerializer
+
+    # Establish models
+    stories_model_class = models.StoriesModel
+    scripts_model_class = models.ScriptsModel
+
+    # Establish authentication and permissions
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, format=None):
+        # Validate story belongs to the user
+        user = request.user
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate story has script
+        try:
+            script = self.scripts_model_class.objects.get(story=story_id)
+        except self.scripts_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Script not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Serialize retrieved script
+        serialized_retrieved_data = self.script_serializer_class(script)
+        # Return success message and script
+        return Response(
+            {"Script retrieved successfully✅":serialized_retrieved_data.data},
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request, story_id, format=None):
+        # Validate story belongs to the user
+        user = request.user
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate story does not have a script
+        if self.scripts_model_class.objects.filter(story=story_id).exists():
+            return Response(
+                {"Errors❌":"Story already has a script"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Serialize user input
+        serialized_user_input = self.script_serializer_class(data=request.data, context={"story":story})
+        # Validate serialized user input
+        if serialized_user_input.is_valid():
+            # Save
+            serialized_user_input.save()
+            # Return success message and data
+            return Response(
+                {"Script created successfully✅":serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+        # Return fail message and errors
+        return Response(
+            {"Script creation failed":serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def put(self, request, story_id, format=None):
+        # Validate story belongs to the user
+        user = request.user
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate story has a script
+        try:
+            script = self.scripts_model_class.objects.get(story=story_id)
+        except self.scripts_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Script not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Serialize user input with script
+        serialized_user_input = self.script_serializer_class(script, data=request.data)
+        # Validate serialized user input
+        if serialized_user_input.is_valid():
+            # Save
+            serialized_user_input.save()
+            # Return success message and data
+            return Response(
+                {"Script updated successfully✅":serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+        # Return fail message and errors
+        return Response(
+            {"Script update failed":serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def patch(self, request, story_id, format=None):
+        # Validate story belongs to the user
+        user = request.user
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate story has a script
+        try:
+            script = self.scripts_model_class.objects.get(story=story_id)
+        except self.scripts_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Script not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Serialize user input with script and partial set to True
+        serialized_user_input = self.script_serializer_class(script, data=request.data, partial=True)
+        # Validate serialized user input
+        if serialized_user_input.is_valid():
+            # Save
+            serialized_user_input.save()
+            # Return success message and data
+            return Response(
+                {"Script updated successfully✅":serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+        # Return fail message and errors
+        return Response(
+            {"Script update failed":serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def delete(self, request, story_id, format=None):
+        # Validate story belongs to the user
+        user = request.user
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate story has a script
+        try:
+            script = self.scripts_model_class.objects.get(story=story_id)
+        except self.scripts_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Script not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Delete script
+        script.delete()
+        # Return success message and data
+        return Response(
+            {"Message":"Script has been deleted successfully✅"},
             status=status.HTTP_204_NO_CONTENT,
         )
 

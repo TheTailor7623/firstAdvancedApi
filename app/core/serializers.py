@@ -217,7 +217,11 @@ class ScriptsSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         """Function to create an object within the model"""
-        return models.ScriptsModel.objects.create(**validated_data)
+        story = self.context.get("story")
+
+        if not story:
+            raise serializers.ValidationError({"Story": "Story must be provided to save the script to❌"})
+        return models.ScriptsModel.objects.create(story=story, **validated_data)
 
     def update(self, instance, validated_data):
         """Function to update an object within the model"""
