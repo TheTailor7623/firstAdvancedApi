@@ -34,6 +34,7 @@ class dashboardApi(APIView):
             "Modify a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people/person_id/",
             "View, create or modify a specific VAKS for a story":"http://127.0.0.1:8000/api/stories/story_id/vaks/",
             "View or create a point for a story":"http://127.0.0.1:8000/api/stories/story_id/points/",
+            "View update or delete a specific point for a story":"http://127.0.0.1:8000/api/stories/story_id/points/point_id",
         }
 
         return Response(
@@ -837,9 +838,9 @@ class vaksApi(APIView):
 
     def delete(self, request, story_id, format=None):
         """Handles DELETE requests to remove a story's VAKS"""
+        # Ensure the user owns the story
         user = request.user
 
-        # Ensure the user owns the story
         story = self.story_model_class.objects.get(user=user, story_id=story_id)
         if not story:
             return Response(
@@ -949,6 +950,7 @@ class pointDetailsApi(APIView):
     permission_classes = [IsAuthenticated,]
 
     def get(self, request, story_id, point_id, format=None):
+        """Handles GET requests to this API endpoint to retrieve a specific story point"""
         # Validate story belongs to user
         user = request.user
 
@@ -973,6 +975,105 @@ class pointDetailsApi(APIView):
         return Response(
             {"Point retrieved successfully✅:":serialized_retrieved_data.data},
             status=status.HTTP_200_OK,
+        )
+
+    def put(self, request, story_id, point_id, format=None):
+        """Handles PUT requests to this API endpoint to update completely a specific story point"""
+        # Validate story belongs to a user
+        user = request.user
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate point belongs to a story
+        try:
+            point = self.points_model_class.objects.get(story=story, point_id=point_id)
+        except self.points_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Point not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Serialize the user input with the current point
+        serialized_user_input = self.points_serializer_class(point, data=request.data)
+        # Validate serialized data
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+            # Return success message
+            return Response(
+                {"Point updated successfully✅:":serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+        # Return error message
+        return Response(
+            {"Errors❌":"Point update failed"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    def patch(self, request, story_id, point_id, format=None):
+        """Handles PATCH requests to this API endpoint to partially update a specific story point"""
+        # Validate story belongs to a user
+        user = request.user
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate point belongs to a story
+        try:
+            point = self.points_model_class.objects.get(story=story, point_id=point_id)
+        except self.points_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Point not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Serialize the user input with the current point
+        serialized_user_input = self.points_serializer_class(point, data=request.data, partial=True)
+        # Validate serialized data
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+            # Return success message
+            return Response(
+                {"Point updated successfully✅:":serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+        # Return error message
+        return Response(
+            {"Errors❌":"Point update failed"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    def delete(self, request, story_id, point_id, format=None):
+        """Handles DELETE request to this API endpoint to delete a specific story point"""
+        # Validate story belongs to a user
+        user = request.user
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate point belongs to a story
+        try:
+            point = self.points_model_class.objects.get(story=story, point_id=point_id)
+        except self.points_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Point not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Delete point
+        point.delete()
+        # Return success message
+        return Response(
+            {"Success ✅": "Point has been deleted"},
+            status=status.HTTP_204_NO_CONTENT,
         )
 
 """
