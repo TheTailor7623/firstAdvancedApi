@@ -906,6 +906,75 @@ class pointsApi(APIView):
             status=status.HTTP_200_OK,
         )
 
+    def post(self, request, story_id, format=None):
+        # Validate that user owns the story
+        user = request.user
+
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize data entered by user
+        serialized_user_input = self.points_serializer_class(data=request.data, context={"story":story})
+        # Validate data entered
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+            # Return success message with data
+            return Response(
+                {"Points created successfully✅":serialized_user_input.data},
+                status=status.HTTP_200_OK,
+            )
+        # Return error message with errors
+        return Response(
+            {"Errors❌":serialized_user_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+class pointDetailsApi(APIView):
+    """API endpoint to manage requests made for CRUD operations to a specific point of a story"""
+    # Establish serializers
+    stories_serializer_class = serializers.StorySerializer
+    points_serializer_class = serializers.PointsSerializer
+
+    # Establish models
+    stories_model_class = models.StoriesModel
+    points_model_class = models.PointsModel
+
+    # Establish authentication and permissions
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, point_id, format=None):
+        # Validate story belongs to user
+        user = request.user
+
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate point belongs to story
+        try:
+            point = self.points_model_class.objects.get(story=story_id, point_id=point_id)
+        except self.points_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Point not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Serialize retrieved data (point)
+        serialized_retrieved_data = self.points_serializer_class(point)
+        # Return success message with data (point)
+        return Response(
+            {"Point retrieved successfully✅:":serialized_retrieved_data.data},
+            status=status.HTTP_200_OK,
+        )
+
 """
 NOTES TO SELF:
 

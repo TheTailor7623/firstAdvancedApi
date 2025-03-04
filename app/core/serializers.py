@@ -196,7 +196,11 @@ class PointsSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         """Function to create an object within the model"""
-        return models.PointsModel.objects.create(**validated_data)
+        story = self.context.get("story")
+
+        if not story:
+            raise serializers.ValidationError({"Story": "Story must be provided to save the point to❌"})
+        return models.PointsModel.objects.create(story=story, **validated_data)
 
     def update(self, instance, validated_data):
         """Function to update an object within the model"""

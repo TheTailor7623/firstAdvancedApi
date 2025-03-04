@@ -45,14 +45,15 @@ api/
             * <int:point_id> (GET, PUT, PATCH, DELETE)
         * script/ (GET, POST, PUT, PATCH, DELETE)
         * links/ (GET, POST, PUT, PATCH, DELETE)
-        * media/ (GET, POST, PUT, PATCH, DELETE)
         * characters/ (GET, POST, PUT, PATCH, DELETE)
+        * media/ (GET, POST, PUT, PATCH, DELETE)
 
 User stories:
 * Users should be able to create stories
-* Users should be able to edit stories
-* Users should be able to search for stories
+* Users should be able to retrieve stories
+* Users should be able to update stories
 * Users should be able to delete stories
+
 * Users should be able to schedule time on a calendar and track how much time was spent each day working on a story
 * Users should be able to filter and sort for stories
 
