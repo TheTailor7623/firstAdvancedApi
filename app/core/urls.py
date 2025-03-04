@@ -22,5 +22,7 @@ urlpatterns = [
     path("stories/<int:story_id>/people/", views.storyPeopleApi.as_view(), name="story-people"),
     path("stories/<int:story_id>/people/<int:person_id>/", views.storyPeopleApiDetails.as_view(), name="story-people-details"),
     # VAKS endpoints
-    path("stories/<int:story_id>/vaks/", views.vaksApi.as_view(), name="story-vaks")
+    path("stories/<int:story_id>/vaks/", views.vaksApi.as_view(), name="story-vaks"),
+    # Point endpoints
+    path("stories/<int:story_id>/points/", views.pointsApi.as_view(), name="story-points"),
 ]

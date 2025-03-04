@@ -11,8 +11,8 @@ from core import serializers, models
 """
 Core application APIs
 {
-    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTA4MDUxOSwiaWF0IjoxNzQwOTk0MTE5LCJqdGkiOiI5NmNkMjUwY2UzOGE0ZDVkYWYzN2JjNmVmNjIwMDI5MCIsInVzZXJfaWQiOjJ9.6xs6VJ7Lf79sof3EPdAXc8X0zmxTVaT-2AsPmainbBg",
-    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMDE1OTM1LCJpYXQiOjE3NDA5OTQxMTksImp0aSI6IjlmZmY5MzIyYTFmZDQ1MDFiYjEyZmMzNmU5M2Y5N2JmIiwidXNlcl9pZCI6Mn0.e_mqmXSQEwlJY5Xds0hBIXtUKg6hBwPrHelD_IlqGMs"
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTE2Njk3OCwiaWF0IjoxNzQxMDgwNTc4LCJqdGkiOiJkZGI3ZTAzNWY0MWI0NTdkYWUzN2E5OTYzZTM2OTU0MSIsInVzZXJfaWQiOjJ9._fMde6iq8VepbQXtwoky-W3phRcz_lX_EX5vG4z15aY",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMDg0MTc4LCJpYXQiOjE3NDEwODA1NzgsImp0aSI6IjkxNzAzODgxMTRmOTQwZWQ5ZGQ2ZWM5OWRjZGY0YmMxIiwidXNlcl9pZCI6Mn0.HswvKFwBEH6Iopa_jLOX2lgcCoRMzfoxUYb1SlZNSOw"
 }
 """
 # Dashboard API endpoints
@@ -33,6 +33,7 @@ class dashboardApi(APIView):
             "View, create a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people/",
             "Modify a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people/person_id/",
             "View, create or modify a specific VAKS for a story":"http://127.0.0.1:8000/api/stories/story_id/vaks/",
+            "View or create a point for a story":"http://127.0.0.1:8000/api/stories/story_id/points/",
         }
 
         return Response(
@@ -862,6 +863,48 @@ class vaksApi(APIView):
             status=status.HTTP_204_NO_CONTENT,
         )
 
+class pointsApi(APIView):
+    """Api to handle all CRUD requests made to the points api endpoint of a story"""
+    # Establish serializers
+    stories_serializer_class = serializers.StorySerializer
+    points_serializer_class = serializers.PointsSerializer
+
+    # Establish models
+    stories_model_class = models.StoriesModel
+    points_model_class = models.PointsModel
+
+    # Establish authentication and permissions
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, format=None):
+        # Validate that the story belongs to the user
+        user = request.user
+
+        try:
+            story = self.stories_model_class.objects.get(user=user, story_id=story_id)
+        except self.stories_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Retrieve the points of the story
+        try:
+            points = self.points_model_class.objects.filter(story=story_id)
+        except self.points_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Points not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize the data retrieved
+        serialized_data = self.points_serializer_class(points, many=True)
+
+        # Return success message with point of the story
+        return Response(
+            {"Points retrieved successfully✅":serialized_data.data},
+            status=status.HTTP_200_OK,
+        )
 
 """
 NOTES TO SELF:
