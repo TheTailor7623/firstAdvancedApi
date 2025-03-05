@@ -254,7 +254,6 @@ class LinksSerializer(serializers.Serializer):
     link_id = serializers.IntegerField(read_only=True)
     title = serializers.CharField(max_length=255)
     description = serializers.CharField(max_length=255)
-    colour = serializers.CharField(max_length=255)
 
     def create(self, validated_data):
         """Function to create an object within the model"""
@@ -264,7 +263,6 @@ class LinksSerializer(serializers.Serializer):
         """Function to update an object within the model"""
         instance.title = validated_data.get("title", instance.title)
         instance.description = validated_data.get("description", instance.description)
-        instance.colour = validated_data.get("colour", instance.colour)
 
         instance.save()
         return instance

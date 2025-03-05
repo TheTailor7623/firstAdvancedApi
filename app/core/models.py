@@ -146,7 +146,6 @@ class LinksModel(models.Model):
     link_id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
-    colour = models.CharField(max_length=255)
 
 class CharactersModel(models.Model):
     """Database characters model for a story's links"""

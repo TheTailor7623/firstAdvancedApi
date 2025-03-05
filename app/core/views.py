@@ -1297,6 +1297,43 @@ class linksApi(APIView):
             status=status.HTTP_200_OK,
         )
 
+    def post(self, request, story_id, format=None):
+        """Handles POST requests to CREATE a link for a story"""
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"error": "Story not found ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize input
+        serialized_input = self.links_serializer_class(data=request.data)
+
+        if serialized_input.is_valid():
+            link_data = serialized_input.validated_data
+
+            # Check if link exists, create if not
+            link, _ = self.links_model_class.objects.get_or_create(**link_data)
+
+            # Link the story and link if not already linked
+            story_link, created = self.story_link_model_class.objects.get_or_create(story=story, link=link)
+
+            return Response(
+                {
+                    "message": "Link successfully added to the story ✅" if created else "Link was already linked to the story",
+                    "link_data": self.links_serializer_class(link).data
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(
+            {"error": serialized_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
 """
 NOTES TO SELF:
 
