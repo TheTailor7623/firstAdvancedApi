@@ -1333,6 +1333,176 @@ class linksApi(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+class linkDetailsApi(APIView):
+    """APIView to handle CRUD requests to the link specific endpoint"""
+    # Class serializers
+    story_serializer_class = serializers.StorySerializer
+    links_serializer_class = serializers.LinksSerializer
+    story_link_serializer_class = serializers.StoryLinkSerializer
+
+    # Class models
+    story_model_class = models.StoriesModel
+    links_model_class = models.LinksModel
+    story_link_model_class = models.StoryLinkModel
+
+    # Class authentication and permissions
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, link_id, format=None):
+        """Handles GET methods to the links API endpoint to RETRIEVE links"""
+        # Validate story belongs to user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate link belongs to story
+        try:
+            link = self.story_link_model_class.objects.get(story=story, link_id=link_id)
+        except self.story_link_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Link not found for this story"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Retrieve all links
+        link_details = self.links_model_class.objects.get(link_id=link_id)
+
+        # Retrieve data for each link_id
+        serialized_retrieved_data = self.links_serializer_class(link_details)
+
+        # Return success message with link data
+        return Response(
+            {
+                "Success ✅": "Link retrieved successfully",
+                "Link details": serialized_retrieved_data.data
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def put(self, request, story_id, link_id, format=None):
+        """Handles PUT requests made the the links endpoint to compeletely update a link"""
+        # Validate story belongs to user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate link belongs to story
+        try:
+            link = self.story_link_model_class.objects.get(story=story, link_id=link_id)
+        except self.story_link_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Link not found for this story"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Retrieve the link
+        link = self.links_model_class.objects.get(link_id=link_id)
+
+        # Serialize user input with link
+        serialized_user_input = self.links_serializer_class(link, data=request.data)
+        # Validate serialized data
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+            # Return success message with new link details
+            return Response(
+                {
+                    "Success ✅": "Link updated successfully",
+                    "Updated link details": serialized_user_input.data
+                },
+                status=status.HTTP_200_OK,
+            )
+        # Return error message
+        return Response(
+            {
+                "Error ❌":"Link failed to update",
+                "Error details":serialized_user_input.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def patch(self, request, story_id, link_id, format=None):
+        """Handles PUT requests made the the links endpoint to partially update a link"""
+        # Validate story belongs to user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate link belongs to story
+        try:
+            link = self.story_link_model_class.objects.get(story=story, link_id=link_id)
+        except self.story_link_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Link not found for this story"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Retrieve the link
+        link = self.links_model_class.objects.get(link_id=link_id)
+
+        # Serialize user input with link
+        serialized_user_input = self.links_serializer_class(link, data=request.data, partial=True)
+        # Validate serialized data
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+            # Return success message with new link details
+            return Response(
+                {
+                    "Success ✅": "Link updated successfully",
+                    "Updated link details": serialized_user_input.data
+                },
+                status=status.HTTP_200_OK,
+            )
+        # Return error message
+        return Response(
+            {
+                "Error ❌":"Link failed to update",
+                "Error details":serialized_user_input.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def delete(self, request, story_id, link_id, format=None):
+        """Handles DELETE request to this API endpoint to delete a specific link"""
+        # Validate story belongs to a user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate link belongs to a story
+        try:
+            link = self.links_model_class.objects.get(story=story, link_id=link_id)
+        except self.links_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Link not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Delete link
+        link.delete()
+        # Return success message
+        return Response(
+            {"Success ✅": "Link has been deleted"},
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
 """
 NOTES TO SELF:
