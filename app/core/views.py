@@ -11,8 +11,8 @@ from core import serializers, models
 """
 Core application APIs
 {
-    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTE2Njk3OCwiaWF0IjoxNzQxMDgwNTc4LCJqdGkiOiJkZGI3ZTAzNWY0MWI0NTdkYWUzN2E5OTYzZTM2OTU0MSIsInVzZXJfaWQiOjJ9._fMde6iq8VepbQXtwoky-W3phRcz_lX_EX5vG4z15aY",
-    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMDg0MTc4LCJpYXQiOjE3NDEwODA1NzgsImp0aSI6IjkxNzAzODgxMTRmOTQwZWQ5ZGQ2ZWM5OWRjZGY0YmMxIiwidXNlcl9pZCI6Mn0.HswvKFwBEH6Iopa_jLOX2lgcCoRMzfoxUYb1SlZNSOw"
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTI1NjgxNiwiaWF0IjoxNzQxMTcwNDE2LCJqdGkiOiIzMWM1MGUwNjAzZWE0NDNkYmU2YjU5NzcxNmQ0NWY3ZCIsInVzZXJfaWQiOjJ9.WW7DJWLb_H5Pwck_Ll8s5YQsUccPQ5BD5PO0y6OojSQ",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMTgyNDE2LCJpYXQiOjE3NDExNzA0MTYsImp0aSI6ImVhZDEzMjI5MGI0YjQ3MThhM2Q4OTlmNTM0OGZjODU5IiwidXNlcl9pZCI6Mn0.cExlvVN7VZ2Bz6SaI80g3s1MDVjdbZ9mmbkVJGv6H0o"
 }
 """
 # Dashboard API endpoints
@@ -34,8 +34,10 @@ class dashboardApi(APIView):
             "Modify a specific incident people list":"http://127.0.0.1:8000/api/stories/story_id/people/person_id/",
             "View, create or modify a specific VAKS for a story":"http://127.0.0.1:8000/api/stories/story_id/vaks/",
             "View or create a point for a story":"http://127.0.0.1:8000/api/stories/story_id/points/",
-            "View update or delete a specific point for a story":"http://127.0.0.1:8000/api/stories/story_id/points/point_id",
-            "Create retrieve update or delete a script for a story":"http://127.0.0.1:8000/api/stories/story_id/script",
+            "View update or delete a specific point for a story":"http://127.0.0.1:8000/api/stories/story_id/points/point_id/",
+            "Create retrieve update or delete a script for a story":"http://127.0.0.1:8000/api/stories/story_id/script/",
+            "View or create a link for a story":"http://127.0.0.1:8000/api/stories/story_id/links/",
+            "View update or delete a specific link for a story":"http://127.0.0.1:8000/api/stories/story_id/links/link_id/",
         }
 
         return Response(
@@ -1243,6 +1245,56 @@ class scriptApi(APIView):
         return Response(
             {"Message":"Script has been deleted successfully✅"},
             status=status.HTTP_204_NO_CONTENT,
+        )
+
+class linksApi(APIView):
+    """APIView to handles CRUD requests made to the links endpoint"""
+    # Class serializers
+    story_serializer_class = serializers.StorySerializer
+    links_serializer_class = serializers.LinksSerializer
+    story_link_serializer_class = serializers.StoryLinkSerializer
+
+    # Class models
+    story_model_class = models.StoriesModel
+    links_model_class = models.LinksModel
+    story_link_model_class = models.StoryLinkModel
+
+    # Class authentication and permissions
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, format=None):
+        """Handles GET methods to the links API endpoint to RETRIEVE links"""
+        # Validate story belongs to user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Retrieve all link_ids belonging to the story
+        try:
+            links_belonging_to_story = self.story_link_model_class.objects.filter(story=story)
+        except self.story_link_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Links not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Retrieve all links
+        links = [story_link_record.link for story_link_record in links_belonging_to_story]
+
+        # Retrieve data for each link_id
+        serialized_retrieved_data = self.links_serializer_class(links, many=True)
+
+        # Return success message with link data
+        return Response(
+            {
+                "Success ✅": "Links retrieved successfully",
+                "Links": serialized_retrieved_data.data
+            },
+            status=status.HTTP_200_OK,
         )
 
 """
