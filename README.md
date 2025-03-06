@@ -28,7 +28,8 @@ api/
         * script/ (GET, POST, PUT, PATCH, DELETE)
         * links/ (GET, POST)
             * <int:link_id> (GET, PUT, PATCH, DELETE)
-        * characters/ (GET, POST, PUT, PATCH, DELETE)
+        * characters/ (GET, POST)
+            * <int:character_id> (GET, PUT, PATCH, DELETE)
         * media/ (GET, POST, PUT, PATCH, DELETE)
 
 User stories:

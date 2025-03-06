@@ -10,10 +10,6 @@ from core import serializers, models
 
 """
 Core application APIs
-{
-    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTI1NjgxNiwiaWF0IjoxNzQxMTcwNDE2LCJqdGkiOiIzMWM1MGUwNjAzZWE0NDNkYmU2YjU5NzcxNmQ0NWY3ZCIsInVzZXJfaWQiOjJ9.WW7DJWLb_H5Pwck_Ll8s5YQsUccPQ5BD5PO0y6OojSQ",
-    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMTgyNDE2LCJpYXQiOjE3NDExNzA0MTYsImp0aSI6ImVhZDEzMjI5MGI0YjQ3MThhM2Q4OTlmNTM0OGZjODU5IiwidXNlcl9pZCI6Mn0.cExlvVN7VZ2Bz6SaI80g3s1MDVjdbZ9mmbkVJGv6H0o"
-}
 """
 # Dashboard API endpoints
 class dashboardApi(APIView):
@@ -38,6 +34,8 @@ class dashboardApi(APIView):
             "Create retrieve update or delete a script for a story":"http://127.0.0.1:8000/api/stories/story_id/script/",
             "View or create a link for a story":"http://127.0.0.1:8000/api/stories/story_id/links/",
             "View update or delete a specific link for a story":"http://127.0.0.1:8000/api/stories/story_id/links/link_id/",
+            "View or create a character for a story":"http://127.0.0.1:8000/api/stories/story_id/characters/",
+            "View update or delete a specific character for a story":"http://127.0.0.1:8000/api/stories/story_id/characters/character_id/",
         }
 
         return Response(
@@ -1504,7 +1502,270 @@ class linkDetailsApi(APIView):
             status=status.HTTP_204_NO_CONTENT,
         )
 
+class charactersApi(APIView):
+    """APIView to handle CRUD requests to the characters API endpoint"""
+    # Class serializers
+    story_serializer_class = serializers.StorySerializer
+    characters_serializer_class = serializers.CharactersSerializer
+    story_character_serializer_class = serializers.StoryCharactersSerializer
+
+    # Class models
+    story_model_class = models.StoriesModel
+    characters_model_class = models.CharactersModel
+    story_character_model_class = models.StoryCharactersModel
+
+    # Class authentication and permissions
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, format=None):
+        """Handles GET methods to the characters API endpoint to RETRIEVE characters"""
+        # Validate story belongs to user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Retrieve all character_ids belonging to the story
+        try:
+            characters_belonging_to_story = self.story_character_model_class.objects.filter(story=story)
+        except self.story_character_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Characters not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Retrieve all characters
+        characters = [story_character_record.characters for story_character_record in characters_belonging_to_story]
+
+        # Retrieve data for each character_id
+        serialized_retrieved_data = self.characters_serializer_class(characters, many=True)
+
+        # Return success message with character data
+        return Response(
+            {
+                "Success ✅": "Characters retrieved successfully",
+                "Characters": serialized_retrieved_data.data
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request, story_id, format=None):
+        """Handles POST requests to CREATE a character for a story"""
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"error": "Story not found ❌"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize input
+        serialized_input = self.characters_serializer_class(data=request.data)
+
+        if serialized_input.is_valid():
+            character_data = serialized_input.validated_data
+
+            # Check if character exists, create if not
+            character, _ = self.characters_model_class.objects.get_or_create(**character_data)
+
+            # Link the story and character if not already linked
+            story_character, created = self.story_character_model_class.objects.get_or_create(story=story, characters=character)
+
+            return Response(
+                {
+                    "message": "Character successfully added to the story ✅" if created else "character was already linked to the story",
+                    "character_data": self.characters_serializer_class(character).data
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(
+            {"error": serialized_input.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+class characterDetailsApi(APIView):
+    """APIView to handle CRUD requests to the character details endpoint"""
+    # Class serializers
+    story_serializer_class = serializers.StorySerializer
+    characters_serializer_class = serializers.CharactersSerializer
+    story_character_serializer_class = serializers.StoryCharactersSerializer
+
+    # Class models
+    story_model_class = models.StoriesModel
+    characters_model_class = models.CharactersModel
+    story_character_model_class = models.StoryCharactersModel
+
+    # Class authentication and permissions
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request, story_id, character_id, format=None):
+        """Handles GET methods to the character details API endpoint to RETRIEVE a character"""
+        # Validate story belongs to user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate character belongs to story
+        try:
+            character = self.story_character_model_class.objects.get(story=story, character_id=character_id)
+        except self.story_character_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Character not found for this story"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Retrieve character details
+        character_details = self.characters_model_class.objects.get(character_id=character_id)
+
+        # Serialized retrieved data for character details
+        serialized_retrieved_data = self.characters_serializer_class(character_details)
+
+        # Return success message with character data
+        return Response(
+            {
+                "Success ✅": "Character retrieved successfully",
+                "Character details": serialized_retrieved_data.data
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def put(self, request, story_id, character_id, format=None):
+        """Handles PUT requests made the the character details endpoint to compeletely update a character"""
+        # Validate story belongs to user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate character belongs to story
+        try:
+            link = self.story_character_model_class.objects.get(story=story, character_id=character_id)
+        except self.story_character_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Character not found for this story"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Retrieve the character
+        character = self.characters_model_class.objects.get(character_id=character_id)
+
+        # Serialize user input with character
+        serialized_user_input = self.characters_serializer_class(character, data=request.data)
+        # Validate serialized data
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+            # Return success message with new character details
+            return Response(
+                {
+                    "Success ✅": "Character updated successfully",
+                    "Updated character details": serialized_user_input.data
+                },
+                status=status.HTTP_200_OK,
+            )
+        # Return error message
+        return Response(
+            {
+                "Error ❌":"Character failed to update",
+                "Error details":serialized_user_input.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def patch(self, request, story_id, character_id, format=None):
+        """Handles PUT requests made the the character details endpoint to partially update a character"""
+        # Validate story belongs to user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate character belongs to story
+        try:
+            character = self.story_character_model_class.objects.get(story=story, character_id=character_id)
+        except self.story_character_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Character not found for this story"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Retrieve the character
+        character = self.characters_model_class.objects.get(character_id=character_id)
+
+        # Serialize user input with character
+        serialized_user_input = self.characters_serializer_class(character, data=request.data, partial=True)
+        # Validate serialized data
+        if serialized_user_input.is_valid():
+            # Save data
+            serialized_user_input.save()
+            # Return success message with new character details
+            return Response(
+                {
+                    "Success ✅": "Character updated successfully",
+                    "Updated character details": serialized_user_input.data
+                },
+                status=status.HTTP_200_OK,
+            )
+        # Return error message
+        return Response(
+            {
+                "Error ❌":"Character failed to update",
+                "Error details":serialized_user_input.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def delete(self, request, story_id, character_id, format=None):
+        """Handles DELETE request to this API endpoint to delete a specific character"""
+        # Validate story belongs to a user
+        user = request.user
+        try:
+            story = self.story_model_class.objects.get(user=user, story_id=story_id)
+        except self.story_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Story not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Validate character belongs to a story
+        try:
+            character = self.characters_model_class.objects.get(story=story, character_id=character_id)
+        except self.characters_model_class.DoesNotExist:
+            return Response(
+                {"Errors❌":"Character not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        # Delete character
+        character.delete()
+        # Return success message
+        return Response(
+            {"Success ✅": "Character has been deleted"},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
 """
+{
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTM0ODI1NiwiaWF0IjoxNzQxMjYxODU2LCJqdGkiOiIzNjQwYmI2MGVmZDI0MDZjOTIwNTY5OGY4ZTg2NjkxYyIsInVzZXJfaWQiOjJ9.Z9ilb-Zpy_rD_1aHj8ktaEf2fbblaXPoHxWtTD8_vZs",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMjczODU2LCJpYXQiOjE3NDEyNjE4NTYsImp0aSI6IjMwN2ZiOTZjMmM2ODRkNWJhOTJmM2JhZDY0Njg4NTU1IiwidXNlcl9pZCI6Mn0.CxCkOUUhSJmEsGtf2nQV7eq5qcxm5kev5Nhfpp9tLGU"
+}
+
 NOTES TO SELF:
 
 Standard Practice:

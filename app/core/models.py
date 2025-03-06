@@ -170,7 +170,7 @@ class StoryLinkModel(models.Model):
 class StoryCharactersModel(models.Model):
     """Database story and characters junction model"""
     story = models.ForeignKey(StoriesModel, on_delete=models.CASCADE)
-    characters = models.ForeignKey(CharactersModel, on_delete=models.CASCADE)
+    character = models.ForeignKey(CharactersModel, on_delete=models.CASCADE)
 
 """
 Notes for myself:

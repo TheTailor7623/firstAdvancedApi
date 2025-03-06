@@ -15,6 +15,9 @@ admin.site.register(models.VAKSModel)
 admin.site.register(models.PointsModel)
 # Links
 admin.site.register(models.LinksModel)
+# Characters
+admin.site.register(models.CharactersModel)
 # Junction tables
 admin.site.register(models.StoryLinkModel)
+admin.site.register(models.StoryCharactersModel)
 admin.site.register(models.PeopleIncidentModel)

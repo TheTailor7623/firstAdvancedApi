@@ -31,4 +31,7 @@ urlpatterns = [
     # Link endpoints
     path("stories/<int:story_id>/links/", views.linksApi.as_view(), name="story-links"),
     path("stories/<int:story_id>/links/<int:link_id>/", views.linkDetailsApi.as_view(), name="story-link-details"),
+    # Character endpoints
+    path("stories/<int:story_id>/characters/", views.charactersApi.as_view(), name="story-characters"),
+    path("stories/<int:story_id>/characters/<int:character_id>/", views.characterDetailsApi.as_view(), name="story-character-details"),
 ]
