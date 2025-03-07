@@ -1759,7 +1759,6 @@ class characterDetailsApi(APIView):
             status=status.HTTP_204_NO_CONTENT,
         )
 
-
 """
 {
     "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0MTM0ODI1NiwiaWF0IjoxNzQxMjYxODU2LCJqdGkiOiIzNjQwYmI2MGVmZDI0MDZjOTIwNTY5OGY4ZTg2NjkxYyIsInVzZXJfaWQiOjJ9.Z9ilb-Zpy_rD_1aHj8ktaEf2fbblaXPoHxWtTD8_vZs",

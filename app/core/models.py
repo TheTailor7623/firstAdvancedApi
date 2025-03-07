@@ -134,12 +134,12 @@ class ScriptsModel(models.Model):
     script_id = models.AutoField(primary_key=True)
     content = models.TextField()
 
-class MediaModel(models.Model):
-    """Database media model for a story's media"""
-    story = models.ForeignKey(StoriesModel, on_delete=models.CASCADE)
-    media_id = models.AutoField(primary_key=True)
-    type = models.CharField(max_length=255)
-    media_url = models.SlugField()
+# class MediaModel(models.Model):
+#     """Database media model for a story's media"""
+#     story = models.ForeignKey(StoriesModel, on_delete=models.CASCADE)
+#     media_id = models.AutoField(primary_key=True)
+#     type = models.CharField(max_length=255)
+#     media_url = models.SlugField()
 
 class LinksModel(models.Model):
     """Database links model for a story's links"""

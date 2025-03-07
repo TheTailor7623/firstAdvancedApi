@@ -230,24 +230,24 @@ class ScriptsSerializer(serializers.Serializer):
         instance.save()
         return instance
 
-class MediaSerializer(serializers.Serializer):
-    """Serializer for media model"""
-    story = serializers.PrimaryKeyRelatedField(read_only=True)
-    media_id = serializers.IntegerField(read_only=True)
-    type = serializers.CharField(max_length=255)
-    media_url = serializers.SlugField()
+# class MediaSerializer(serializers.Serializer):
+#     """Serializer for media model"""
+#     story = serializers.PrimaryKeyRelatedField(read_only=True)
+#     media_id = serializers.IntegerField(read_only=True)
+#     type = serializers.CharField(max_length=255)
+#     media_url = serializers.SlugField()
 
-    def create(self, validated_data):
-        """Function to create an object within the model"""
-        return models.MediaModel.objects.create(**validated_data)
+#     def create(self, validated_data):
+#         """Function to create an object within the model"""
+#         return models.MediaModel.objects.create(**validated_data)
 
-    def update(self, instance, validated_data):
-        """Function to update an object within the model"""
-        instance.type = validated_data.get("type", instance.type)
-        instance.media_url = validated_data.get("media_url", instance.media_url)
+#     def update(self, instance, validated_data):
+#         """Function to update an object within the model"""
+#         instance.type = validated_data.get("type", instance.type)
+#         instance.media_url = validated_data.get("media_url", instance.media_url)
 
-        instance.save()
-        return instance
+#         instance.save()
+#         return instance
 
 class LinksSerializer(serializers.Serializer):
     """Serializer for link model"""

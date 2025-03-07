@@ -30,7 +30,6 @@ api/
             * <int:link_id> (GET, PUT, PATCH, DELETE)
         * characters/ (GET, POST)
             * <int:character_id> (GET, PUT, PATCH, DELETE)
-        * media/ (GET, POST, PUT, PATCH, DELETE)
 
 User stories:
 * Users should be able to create stories
